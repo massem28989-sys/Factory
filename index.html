@@ -617,16 +617,19 @@ function switchAppTab(tab) {
 }
 
 async function boot() {
-  await Promise.all([loadMaterials(), loadMaterialGroups(), loadRecipeCategories(), loadFactoryUsers()]);
-  await loadRecipesIndex();
-  populateIngredientsDatalist();
+  await Promise.all([loadMaterials(), loadMaterialGroups(), loadFactoryUsers()]);
   renderMaterialGroupChips();
   renderMaterialGroupsList();
   populateMaterialGroupSelect();
   renderMaterialsList();
   populateFactoryUserSelect();
-  newRecipe();
-  switchAppTab('factoryInv');
+  switchAppTab('factoryInv'); // اعرض شاشة الجرد فورًا
+
+  // حمّل الريسيبيهات وتصنيفاتها في الخلفية من غير ما توقّف عرض الشاشة
+  loadRecipeCategories().then(() => loadRecipesIndex()).then(() => {
+    populateIngredientsDatalist();
+    newRecipe();
+  });
 }
 
 async function loadMaterialGroups() {
