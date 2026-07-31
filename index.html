@@ -2010,6 +2010,7 @@ async function importPresetRecipes() {
   btn.disabled = false;
 }
 
+loadFactoryUsers().then(() => populateFactoryUserSelect());
 </script>
 
 <script>
