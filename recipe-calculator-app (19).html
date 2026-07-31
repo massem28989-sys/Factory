@@ -1,0 +1,2056 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<link rel="manifest" href="./recipe-manifest.json">
+<meta name="theme-color" content="#B71C1C">
+<link rel="apple-touch-icon" href="./recipe-icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>حاسبة تكلفة الريسيبي - فروج</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Cairo', 'Tahoma', sans-serif;
+    background: #F7F7F7;
+    color: #222222;
+    direction: rtl;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='200'%3E%3Cg transform='rotate(-28 210 100)'%3E%3Ctext x='210' y='95' font-family='Arial, sans-serif' font-size='22' font-weight='700' letter-spacing='1' fill='%23B71C1C' text-anchor='middle'%3EMoustafa Asim%3C/text%3E%3Ctext x='210' y='120' font-family='Arial, sans-serif' font-size='13' font-weight='700' letter-spacing='3' fill='%23B71C1C' text-anchor='middle'%3EACCOUNTANT%3C/text%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 420px 200px;
+    opacity: 0.1;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 20px 16px 60px; position: relative; z-index: 1; }
+  header.top {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 0 14px; border-bottom: 2px solid #E0E0E0;
+    margin-bottom: 18px;
+  }
+  header.top h1 { font-size: 19px; font-weight: 700; margin: 0; color: #3A1414; }
+  header.top p { margin: 2px 0 0; font-size: 12.5px; color: #8A8A8A; }
+  .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+  .tab-btn {
+    flex: 1; padding: 11px; border-radius: 10px; border: 1.5px solid #E0E0E0;
+    background: #fff; font-family: inherit; font-size: 14.5px; font-weight: 600;
+    color: #8A8A8A; cursor: pointer; transition: all .15s;
+  }
+  .tab-btn.active { background: #B71C1C; border-color: #B71C1C; color: #fff; }
+  .chips-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip-btn { padding: 7px 14px; border-radius: 20px; border: 1.5px solid #E0E0E0; background: #fff; font-family: inherit; font-size: 12.5px; font-weight: 700; color: #444444; cursor: pointer; }
+  .chip-btn.active { background: #B71C1C; border-color: #B71C1C; color: #fff; }
+  .card {
+    background: #fff; border: 1px solid #E0E0E0; border-radius: 14px;
+    padding: 18px; margin-bottom: 16px;
+  }
+  .card h2 { font-size: 15.5px; font-weight: 700; margin: 0 0 14px; color: #222222; }
+  label { display: block; font-size: 12.5px; color: #8A8A8A; margin-bottom: 5px; font-weight: 600; }
+  select, input[type=date], input[type=number], input[type=text], input[type=password] {
+    width: 100%; padding: 10px 12px; border-radius: 9px; border: 1.5px solid #E0E0E0;
+    font-family: inherit; font-size: 14.5px; background: #F7F7F7; color: #222222;
+  }
+  select:focus, input:focus { outline: none; border-color: #B71C1C; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .row3 { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 10px; align-items: end; margin-bottom: 4px; }
+  button.primary {
+    padding: 11px 18px; border-radius: 9px; border: none; background: #B71C1C;
+    color: #fff; font-family: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
+  }
+  button.primary:hover { background: #8E1515; }
+  button.primary:disabled { background: #E0E0E0; cursor: not-allowed; }
+  button.danger { background: #A32D2D; }
+  button.danger:hover { background: #7A1010; }
+  button.ghost {
+    padding: 10px 14px; border-radius: 9px; border: 1.5px solid #E0E0E0; background: #fff;
+    font-family: inherit; font-weight: 600; font-size: 13.5px; color: #444444; cursor: pointer;
+  }
+  button.ghost:hover { background: #FBEAEA; }
+  button.icon-btn {
+    width: 36px; height: 36px; border-radius: 9px; border: 1.5px solid #F5D0D0; background: #FDECEC;
+    color: #B71C1C; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  th, td { padding: 9px 8px; text-align: right; border-bottom: 1px solid #F5D0D0; }
+  th { color: #8A8A8A; font-weight: 600; font-size: 12px; }
+  td.num { font-variant-numeric: tabular-nums; font-weight: 600; }
+  .empty { text-align: center; color: #8A8A8A; font-size: 13px; padding: 24px 0; }
+  .metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .metric { background: #FDECEC; border-radius: 11px; padding: 13px; text-align: center; }
+  .metric .n { font-size: 22px; font-weight: 700; color: #3A1414; }
+  .metric .l { font-size: 11.5px; color: #8A8A8A; margin-top: 2px; }
+  .toast {
+    position: sticky; bottom: 10px; margin-top: 14px; padding: 11px 14px; border-radius: 10px;
+    font-size: 13.5px; font-weight: 600; text-align: center;
+  }
+  .toast.ok { background: #E7F1E1; color: #3B6D11; }
+  .toast.err { background: #FBEAEA; color: #A32D2D; }
+  .muted { color: #8A8A8A; font-size: 12.5px; }
+  .link-btn { background: none; border: none; color: #B71C1C; font-family: inherit; font-weight: 700; font-size: 12.5px; cursor: pointer; padding: 4px 6px; }
+  .link-btn:hover { text-decoration: underline; }
+  #printArea { display: none; }
+  @media print {
+    body * { visibility: hidden; }
+    #printArea, #printArea * { visibility: visible; }
+    #printArea { display: block; position: absolute; top: 0; right: 0; left: 0; padding: 24px; }
+  }
+</style>
+</head>
+<body>
+<div id="printArea"></div>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>حاسبة تكلفة الريسيبي</h1>
+      <p>Farooj Abu Alabd System</p>
+    </div>
+    <img src="./recipe-header-logo.png" alt="Farooj Abu Alabd" style="width:52px; height:52px;">
+  </header>
+
+  <div id="appContent">
+    <div class="tabs">
+      <button class="tab-btn" id="tabCalcBtn" onclick="switchAppTab('calc')">حاسبة الريسيبي</button>
+      <button class="tab-btn active" id="tabFactoryInvBtn" onclick="switchAppTab('factoryInv')">جرد</button>
+      <button class="tab-btn" id="tabMaterialsBtn" onclick="switchAppTab('materials')">المواد الخام</button>
+      <button class="tab-btn" id="tabSettingsBtn" onclick="switchAppTab('settings')">Accountant</button>
+    </div>
+
+    <!-- ===== ACCOUNTANT-AREA PASSWORD GATE (بيحمي حاسبة الريسيبي والمواد الخام وAccountant بس) ===== -->
+    <div class="card" id="lockCard" style="display:none;">
+      <h2>الصفحة محمية بكلمة سر</h2>
+      <p class="muted">بيانات التكلفة والأسعار حساسة - أدخل كلمة السر للمتابعة</p>
+      <div class="row" style="grid-template-columns: 1fr auto; align-items:end; margin-top:10px;">
+        <div>
+          <label>كلمة السر</label>
+          <input type="password" id="passwordInput" placeholder="كلمة السر" onkeypress="if(event.key==='Enter') unlockApp()">
+        </div>
+        <button class="primary" onclick="unlockApp()">دخول</button>
+      </div>
+      <p class="muted" id="passwordError" style="display:none; color:#A32D2D;">كلمة السر غير صحيحة، حاول تاني.</p>
+    </div>
+
+    <div id="calcView" style="display:none;">
+    <div class="card">
+      <h2>الريسيبيهات المحفوظة</h2>
+      <label>فلترة بالتصنيف</label>
+      <div id="recipeCategoryChipsWrap" class="chips-row" style="margin-bottom:12px;"></div>
+      <div class="row" style="grid-template-columns: 1fr auto auto; align-items:end;">
+        <div>
+          <label>اختار ريسيبي</label>
+          <select id="recipeSelect" onchange="loadSelectedRecipe()">
+            <option value="">-- اختار ريسيبي محفوظ --</option>
+          </select>
+        </div>
+        <button class="ghost" onclick="newRecipe()">ريسيبي جديد</button>
+        <button class="ghost" onclick="deleteCurrentRecipe()" id="deleteRecipeBtn" style="display:none; color:#A32D2D;">حذف</button>
+      </div>
+      <button class="link-btn" onclick="importPresetRecipes()" id="importBtn" style="margin-top:8px;">استيراد ريسيبيهات المصنع الجاهزة (24 ريسيبي)</button>
+      <br>
+      <button class="link-btn" onclick="syncAllRecipesToMaterials()" id="syncAllBtn" style="margin-top:4px;">مزامنة كل الريسيبيهات مع أسعار المواد الخام</button>
+      <p class="muted" id="syncAllHint" style="margin-top:4px;">&nbsp;</p>
+      <p class="muted" id="importHint">&nbsp;</p>
+    </div>
+
+    <div class="card">
+      <h2 style="cursor:pointer;" onclick="toggleSectionCollapse('recipeCategoriesSection')">إدارة تصنيفات الريسيبي <span class="muted" id="recipeCategoriesSectionArrow">▾</span></h2>
+      <div id="recipeCategoriesSection">
+        <div class="row3" style="grid-template-columns: 2fr auto;">
+          <input type="text" id="newRecipeCategoryInput" placeholder="اسم تصنيف جديد (مثلاً: لحوم)">
+          <button class="icon-btn" onclick="addRecipeCategory()" aria-label="إضافة">+</button>
+        </div>
+        <div id="recipeCategoriesListWrap" style="margin-top:10px;"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>بيانات الريسيبي</h2>
+      <div class="row">
+        <div>
+          <label>اسم الريسيبي</label>
+          <input type="text" id="recipeName" placeholder="مثلاً: صوص وردي">
+        </div>
+        <div>
+          <label>مستوى الريسيبي</label>
+          <select id="recipeTier">
+            <option value="factory">ريسيبي مصنع</option>
+            <option value="store">ريسيبي فرع (منتج نهائي)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>تصنيف الريسيبي</label>
+          <select id="recipeCategory"></select>
+        </div>
+        <div></div>
+      </div>
+      <div class="row">
+        <div>
+          <label>الكمية الأساسية اللي الريسيبي بيطلعها</label>
+          <input type="number" id="yieldQty" min="0" step="0.01" placeholder="مثلاً 10">
+        </div>
+        <div>
+          <label>وحدة القياس</label>
+          <input type="text" id="yieldUnit" placeholder="مثلاً KG">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>المكونات (المواد الخام)</h2>
+      <label>إضافة مكون من كتالوج المواد الخام</label>
+      <div class="row3" style="grid-template-columns: 2fr 1fr 1fr 1fr auto;">
+        <div>
+          <input list="ingredientsList" id="ingredientInput" placeholder="اكتب اسم المكون">
+          <datalist id="ingredientsList"></datalist>
+        </div>
+        <div>
+          <input type="text" id="ingredientUnit" placeholder="الوحدة">
+        </div>
+        <div>
+          <input type="number" id="ingredientQty" min="0" step="0.001" placeholder="الكمية">
+        </div>
+        <div>
+          <input type="number" id="ingredientPriceInput" min="0" step="0.01" placeholder="سعر الوحدة">
+        </div>
+        <button class="icon-btn" onclick="addIngredientRow()" aria-label="إضافة">+</button>
+      </div>
+      <p class="muted" id="ingredientHint">اكتب اسم المكون والوحدة والكمية وسعر الوحدة، واضغط +</p>
+
+      <label style="margin-top:14px;">إضافة مكوّن من ريسيبي آخر (مربوط تلقائي بتكلفته)</label>
+      <div class="row3" style="grid-template-columns: 2fr 1fr auto;">
+        <div>
+          <select id="ingredientRecipeSelect"><option value="">-- اختار ريسيبي --</option></select>
+        </div>
+        <div>
+          <input type="number" id="ingredientRecipeQty" min="0" step="0.001" placeholder="الكمية">
+        </div>
+        <button class="icon-btn" onclick="addRecipeIngredientRow()" aria-label="إضافة">+</button>
+      </div>
+      <p class="muted">لو سعر الريسيبي المصدر ده اتغيّر بعدين، التكلفة هنا هتتحدّث تلقائي</p>
+
+      <div id="ingredientsTableWrap" style="margin-top:14px;">
+        <p class="empty">لسه مفيش مكونات مضافة</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>التعبئة (اختياري)</h2>
+      <p class="muted" style="margin-top:-8px;">مصاريف التعبئة والتغليف الخاصة بالريسيبي ده (علب، أغطية، إستيكرات...)</p>
+      <label>إضافة عنصر تعبئة</label>
+      <div class="row3" style="grid-template-columns: 2fr 1fr 1fr 1fr auto;">
+        <div>
+          <input list="packagingList" id="packagingInput" placeholder="اكتب اسم عنصر التعبئة">
+          <datalist id="packagingList"></datalist>
+        </div>
+        <div>
+          <input type="text" id="packagingUnit" placeholder="الوحدة">
+        </div>
+        <div>
+          <input type="number" id="packagingQty" min="0" step="0.001" placeholder="الكمية">
+        </div>
+        <div>
+          <input type="number" id="packagingPriceInput" min="0" step="0.01" placeholder="سعر الوحدة">
+        </div>
+        <button class="icon-btn" onclick="addPackagingRow()" aria-label="إضافة">+</button>
+      </div>
+      <p class="muted" id="packagingHint">&nbsp;</p>
+
+      <div id="packagingTableWrap" style="margin-top:14px;">
+        <p class="empty">لسه مفيش عناصر تعبئة مضافة</p>
+      </div>
+    </div>
+
+    <div class="metrics" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="metric"><div class="n" id="mRawCost">0</div><div class="l">تكلفة المواد الخام</div></div>
+      <div class="metric"><div class="n" id="mPackagingCost">0</div><div class="l">تكلفة التعبئة</div></div>
+      <div class="metric"><div class="n" id="mTotalCost">0</div><div class="l">التكلفة الإجمالية</div></div>
+      <div class="metric"><div class="n" id="mUnitCost">0</div><div class="l">تكلفة الوحدة الواحدة</div></div>
+    </div>
+
+    <button class="primary" style="width:100%; padding:14px;" onclick="saveRecipe()">حفظ الريسيبي</button>
+    <div id="saveToast"></div>
+
+    <div class="card" style="margin-top:20px;">
+      <h2>تكبير / تصغير الكمية</h2>
+      <p class="muted" style="margin-top:-8px;">احسب مكونات وتكلفة أي كمية تانية بناءً على الريسيبي الأساسي</p>
+      <div class="row" style="grid-template-columns: 1fr auto;">
+        <div>
+          <label>الكمية المطلوبة (<span id="scaleUnitLabel">-</span>)</label>
+          <input type="number" id="scaleQty" min="0" step="0.01" placeholder="مثلاً 35">
+        </div>
+        <button class="primary" onclick="calculateScale()">احسب</button>
+      </div>
+    </div>
+
+    <div class="card" id="scaleResultCard" style="display:none;">
+      <div class="row" style="grid-template-columns: 1fr auto auto; align-items:center; margin-bottom:0;">
+        <h2 style="margin:0;">نتيجة الحساب</h2>
+        <button class="ghost" onclick="exportScaleToExcel()">تصدير Excel</button>
+        <button class="ghost" onclick="printScaleResult()">طباعة</button>
+      </div>
+      <div class="metrics" style="margin-top:14px;">
+        <div class="metric"><div class="n" id="sTotalCost">0</div><div class="l">التكلفة الإجمالية</div></div>
+        <div class="metric"><div class="n" id="sUnitCost">0</div><div class="l">تكلفة الوحدة</div></div>
+        <div class="metric"><div class="n" id="sFactor">0</div><div class="l">معامل التكبير/التصغير</div></div>
+      </div>
+      <div id="scaleTableWrap"></div>
+    </div>
+    </div>
+
+    <div id="materialsView" style="display:none;">
+      <div class="card">
+        <h2>تحديث أسعار المصنع (مارس 2026)</h2>
+        <p class="muted" style="margin-top:-8px;">بيحدّث سعر أي مادة موجودة بالاسم نفسه، وبيضيف أي مادة جديدة مش موجودة عندك، من غير ما يمسح أي مادة عندك دلوقتي</p>
+        <button class="primary" onclick="syncFactoryMaterialPrices()" id="syncPricesBtn">تحديث/إضافة من قائمة المصنع الجديدة</button>
+        <p class="muted" id="syncPricesHint" style="margin-top:8px;">&nbsp;</p>
+      </div>
+      <div class="card">
+        <h2 style="cursor:pointer;" onclick="toggleSectionCollapse('materialGroupsSection')">إدارة مجموعات المواد <span class="muted" id="materialGroupsSectionArrow">▾</span></h2>
+        <div id="materialGroupsSection">
+          <div class="row3" style="grid-template-columns: 2fr auto;">
+            <input type="text" id="newMaterialGroupInput" placeholder="اسم مجموعة جديدة (مثلاً: لحوم)">
+            <button class="icon-btn" onclick="addMaterialGroup()" aria-label="إضافة">+</button>
+          </div>
+          <div id="materialGroupsListWrap" style="margin-top:10px;"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>إضافة مادة جديدة</h2>
+        <div class="row3" style="grid-template-columns: 2fr 1fr 1fr auto;">
+          <input type="text" id="newMaterialName" placeholder="اسم المادة">
+          <input type="text" id="newMaterialUnit" placeholder="الوحدة">
+          <input type="number" id="newMaterialPrice" min="0" step="0.01" placeholder="سعر الوحدة">
+          <div></div>
+        </div>
+        <div class="row3" style="grid-template-columns: 1fr 1fr auto; margin-top:8px;">
+          <select id="newMaterialType">
+            <option value="raw">مادة خام</option>
+            <option value="packaging">تعبئة</option>
+          </select>
+          <select id="newMaterialGroup"></select>
+          <button class="icon-btn" onclick="addMaterial()" aria-label="إضافة">+</button>
+        </div>
+        <p class="muted" id="materialHint">&nbsp;</p>
+      </div>
+      <div class="card">
+        <h2>المواد الحالية (<span id="materialCount">0</span>)</h2>
+        <input type="text" id="materialSearchInput" placeholder="ابحث عن مادة بالاسم..." oninput="renderMaterialsList()" style="margin-bottom:12px;">
+        <div class="tabs" style="margin-bottom:12px;">
+          <button class="tab-btn active" id="matFilterAllBtn" onclick="setMaterialFilter('all')" style="font-size:13px;">الكل</button>
+          <button class="tab-btn" id="matFilterRawBtn" onclick="setMaterialFilter('raw')" style="font-size:13px;">مواد خام</button>
+          <button class="tab-btn" id="matFilterPackBtn" onclick="setMaterialFilter('packaging')" style="font-size:13px;">تعبئة</button>
+        </div>
+        <label>فلترة بالمجموعة</label>
+        <div id="materialGroupChipsWrap" class="chips-row" style="margin-bottom:12px;"></div>
+        <div id="materialsListWrap"><p class="empty">جاري التحميل...</p></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="factoryInvView">
+    <div class="card" id="factoryInvLoginCard">
+      <h2>تسجيل دخول الجرد</h2>
+      <div class="row">
+        <div>
+          <label>اسم المستخدم</label>
+          <select id="factoryInvUsername"></select>
+        </div>
+        <div>
+          <label>كلمة السر</label>
+          <input type="password" id="factoryInvUserPassword" placeholder="كلمة السر" onkeypress="if(event.key==='Enter') loginFactoryInvUser()">
+        </div>
+      </div>
+      <button class="primary" onclick="loginFactoryInvUser()">دخول</button>
+      <p class="muted" id="factoryInvLoginError" style="display:none; color:#A32D2D; margin-top:8px;">اسم المستخدم أو كلمة السر غلط.</p>
+    </div>
+
+    <div id="factoryInvContent" style="display:none;">
+      <div class="card">
+        <div class="row" style="grid-template-columns: 1fr auto auto; align-items:end;">
+          <div>
+            <label>التاريخ</label>
+            <input type="date" id="factoryInvDate" onchange="loadFactoryInventory()">
+          </div>
+          <button class="ghost" onclick="loadFactoryInventory()">تحميل بيانات اليوم</button>
+          <button class="ghost" onclick="logoutFactoryInvUser()" style="color:#A32D2D;">تسجيل خروج</button>
+        </div>
+        <p class="muted" style="margin-top:8px;">مسجل دخول باسم: <b id="factoryInvLoggedInAs"></b> — اكتب الكمية المتوفرة فعليًا في المصنع لكل مادة. الخلايا الفاضية معناها صفر.</p>
+      </div>
+
+      <div class="card">
+        <h2>صنف مش موجود في القائمة؟</h2>
+        <div class="row3" style="grid-template-columns: 2fr 1fr 1fr auto;">
+          <input type="text" id="quickAddItemName" placeholder="اسم الصنف">
+          <input type="text" id="quickAddItemUnit" placeholder="الوحدة">
+          <input type="number" id="quickAddItemPrice" min="0" step="0.01" placeholder="السعر (اختياري)">
+          <button class="icon-btn" onclick="quickAddFactoryItem()" aria-label="إضافة">+</button>
+        </div>
+        <p class="muted" id="quickAddHint">هيتضاف فورًا لكتالوج المواد الخام وتقدر تكتب كميته على طول</p>
+      </div>
+
+      <div class="card">
+        <input type="text" id="factoryInvSearchInput" placeholder="ابحث عن مادة..." oninput="renderFactoryInventoryList()" style="margin-bottom:12px;">
+        <label>فلترة بالمجموعة</label>
+        <div id="factoryInvGroupChipsWrap" class="chips-row" style="margin-bottom:12px;"></div>
+        <div id="factoryInventoryListWrap"><p class="empty">اختار التاريخ الأول.</p></div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric"><div class="n" id="mFactoryInvTotal">0</div><div class="l">إجمالي قيمة الجرد</div></div>
+        <div class="metric"><div class="n" id="mFactoryInvCount">0</div><div class="l">عدد الأصناف المعدودة</div></div>
+      </div>
+
+      <button class="primary" style="width:100%; padding:14px;" onclick="saveFactoryInventory()" id="saveFactoryInvBtn">حفظ جرد المصنع</button>
+      <div id="factoryInvToast"></div>
+    </div>
+  </div>
+
+  <div id="settingsView" style="display:none;">
+    <div class="card">
+      <h2>إدارة مستخدمين الجرد</h2>
+      <div class="row3" style="grid-template-columns: 1fr 1fr auto;">
+        <input type="text" id="newFactoryUserName" placeholder="اسم المستخدم">
+        <input type="text" id="newFactoryUserPassword" placeholder="كلمة السر">
+        <button class="icon-btn" onclick="addFactoryUser()" aria-label="إضافة">+</button>
+      </div>
+      <p class="muted" id="factoryUserHint">&nbsp;</p>
+      <div id="factoryUsersListWrap" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>لوحة مراجعة جرد المصنع</h2>
+      <div class="row" style="grid-template-columns: 1fr auto; align-items:end;">
+        <div>
+          <label>عرض جرد يوم</label>
+          <input type="date" id="reviewFactoryInvDate">
+        </div>
+        <button class="ghost" onclick="loadFactoryInventoryReview()">عرض</button>
+      </div>
+      <div id="factoryInvReviewWrap" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>تغيير كلمة السر</h2>
+      <div class="row">
+        <div>
+          <label>كلمة السر الجديدة</label>
+          <input type="text" id="newAppPasswordInput" placeholder="كلمة السر الجديدة">
+        </div>
+        <div>
+          <label>تأكيد كلمة السر</label>
+          <input type="text" id="confirmAppPasswordInput" placeholder="أعد كتابتها">
+        </div>
+      </div>
+      <button class="primary" onclick="changeAppPassword()">حفظ كلمة السر الجديدة</button>
+      <p class="muted" id="changeAppPasswordHint" style="margin-top:8px;">&nbsp;</p>
+    </div>
+  </div>
+</div>
+
+<script>
+const GSCRIPT_URL = "https://script.google.com/macros/s/AKfycbyMNYT0w8XeiPSXW9_of3gA7fyS6EqCw842-YA5MfVMRdppDbkz_w5Wr9xZCviXSaJw/exec";
+const SECRET_TOKEN = "B_pS9joBTY2q0lCXopjE5xMegt4fCEl9sTsyNqSGFI0"; // لازم يطابق نفس الكود في Code.gs
+const APP_PASSWORD = "Moustafa"; // كلمة سر الوصول لحاسبة التكلفة - نفس كلمة سر إدارة الأصناف
+
+const PRESET_MATERIALS = [{"name": "طحينة", "unit": "كيلو", "price": 16.43, "type": "raw"}, {"name": "ليمون", "unit": "كيلو", "price": 25.0, "type": "raw"}, {"name": "ثوم", "unit": "ك", "price": 15.0, "type": "raw"}, {"name": "ملح", "unit": "ك", "price": 1.2, "type": "raw"}, {"name": "مياه", "unit": "لتر", "price": 0.0, "type": "raw"}, {"name": "حمص مسلوق", "unit": "كيلو", "price": 4.99789, "type": "raw"}, {"name": "طحينة شوباكس", "unit": "كيلو", "price": 22.78, "type": "raw"}, {"name": "زيت", "unit": "لتر", "price": 6.0, "type": "raw"}, {"name": "ملح ليمون", "unit": "كيلو", "price": 11.0, "type": "raw"}, {"name": "ثلج", "unit": "ك", "price": 0.0, "type": "raw"}, {"name": "زيت زيتون", "unit": "لتر", "price": 13.43, "type": "raw"}, {"name": "بقدونس", "unit": "كيلو", "price": 5.0, "type": "raw"}, {"name": "طماطم", "unit": "كيلو", "price": 4.0, "type": "raw"}, {"name": "بصل", "unit": "كيلو", "price": 1.45, "type": "raw"}, {"name": "برغل", "unit": "كيلو", "price": 7.98, "type": "raw"}, {"name": "صوص تبولة", "unit": "كيلو", "price": 14.7366, "type": "raw"}, {"name": "دبس رمان", "unit": "لتر", "price": 27.77333, "type": "raw"}, {"name": "سماق", "unit": "ك", "price": 20.0, "type": "raw"}, {"name": "خل ابيض", "unit": "لتر", "price": 1.125, "type": "raw"}, {"name": "خس", "unit": "كيلو", "price": 5.0, "type": "raw"}, {"name": "خيار", "unit": "كيلو", "price": 3.0, "type": "raw"}, {"name": "فلفل اخضر", "unit": "كيلو", "price": 4.5, "type": "raw"}, {"name": "بصل اخضر", "unit": "كيلو", "price": 6.0, "type": "raw"}, {"name": "نعناع", "unit": "كيلو", "price": 5.0, "type": "raw"}, {"name": "فجل", "unit": "كيلو", "price": 5.0, "type": "raw"}, {"name": "زعتر اخضر", "unit": "كيلو", "price": 4.0, "type": "raw"}, {"name": "جرجير", "unit": "كيلو", "price": 5.0, "type": "raw"}, {"name": "باقلو", "unit": "كيلو", "price": 6.0, "type": "raw"}, {"name": "نشا مطبوخ", "unit": "كيلو", "price": 0.48434, "type": "raw"}, {"name": "ثوم فريش", "unit": "كيلو", "price": 9.0, "type": "raw"}, {"name": "بيض", "unit": "حبة", "price": 0.54, "type": "raw"}, {"name": "زيت عافية", "unit": "لتر", "price": 10.84, "type": "raw"}, {"name": "صوص بيتزا", "unit": "كيلو", "price": 19.5, "type": "raw"}, {"name": "زبده", "unit": "كيلو", "price": 33.0, "type": "raw"}, {"name": "بهارات كاجون", "unit": "كيلو", "price": 27.5, "type": "raw"}, {"name": "ليمون عصير", "unit": "لتر", "price": 25.0, "type": "raw"}, {"name": "صويا صوص", "unit": "لتر", "price": 34.76667, "type": "raw"}, {"name": "حليب", "unit": "لتر", "price": 4.16667, "type": "raw"}, {"name": "تشيلي بودر", "unit": "كيلو", "price": 10.5, "type": "raw"}, {"name": "هوت وصوص", "unit": "كيلو", "price": 12.05, "type": "raw"}, {"name": "راما كريم", "unit": "كيلو", "price": 14.5, "type": "raw"}, {"name": "كريمه", "unit": "كيلو", "price": 14.5, "type": "raw"}, {"name": "بهارات بيري بيري", "unit": "كيلو", "price": 21.0, "type": "raw"}, {"name": "موتزريلا", "unit": "كيلو", "price": 29.0, "type": "raw"}, {"name": "بهار سبايسي", "unit": "كيلو", "price": 18.5, "type": "raw"}, {"name": "بهار كوكتيل", "unit": "كيلو", "price": 18.3, "type": "raw"}, {"name": "خل", "unit": "لتر", "price": 1.125, "type": "raw"}, {"name": "كاتشب  - جالون", "unit": "كيلو", "price": 3.5, "type": "raw"}, {"name": "معجون طماطم", "unit": "كيلو", "price": 4.56, "type": "raw"}, {"name": "ثوم فريش مقشر", "unit": "كيلو", "price": 9.0, "type": "raw"}, {"name": "شطه حارة - داقوس", "unit": "حبة", "price": 0.805, "type": "raw"}, {"name": "بابريكا", "unit": "ك", "price": 9.5, "type": "raw"}, {"name": "زنجبيل مطحون", "unit": "كيلو", "price": 18.0, "type": "raw"}, {"name": "بصل ابيض", "unit": "-", "price": 4.5, "type": "raw"}, {"name": "بهار طاووق", "unit": "كيلو", "price": 18.5, "type": "raw"}, {"name": "باذنجان مثلج", "unit": "كيلو", "price": 16.0, "type": "raw"}, {"name": "فلفل اسود", "unit": "كيلو", "price": 34.0, "type": "raw"}, {"name": "فلفل ابيض", "unit": "كيلو", "price": 42.0, "type": "raw"}, {"name": "ثوم بودر", "unit": "كيلو", "price": 10.0, "type": "raw"}, {"name": "دجاج مسحب", "unit": "-", "price": 15.0, "type": "raw"}, {"name": "صوص كوكتيل", "unit": "-", "price": 7.72741, "type": "raw"}, {"name": "دجاج طاووق", "unit": "كيلو", "price": 17.0, "type": "raw"}, {"name": "صوص طاووق", "unit": "كيلو", "price": 8.70633, "type": "raw"}, {"name": "دجاج افخاد", "unit": "كيلو", "price": 20.0, "type": "raw"}, {"name": "صوص افخاد", "unit": "كيلو", "price": 5.9812, "type": "raw"}, {"name": "دجاجة كامله", "unit": "كيلو", "price": 15.0, "type": "raw"}, {"name": "صوص كوكتيل دجاج", "unit": "كيلو", "price": 7.72741, "type": "raw"}, {"name": "بهار وردى", "unit": "كيلو", "price": 14.0, "type": "raw"}, {"name": "mix arabic pickle 6kg", "unit": "حبه", "price": 4.2, "type": "raw"}, {"name": "arabic cucumber pickles", "unit": "حبه", "price": 5.9, "type": "raw"}, {"name": "Shurooq oil 5ltr", "unit": "حبه", "price": 6.5, "type": "raw"}, {"name": "330 ml pepsi", "unit": "حبه", "price": 2.1723, "type": "raw"}, {"name": "330 ml dew", "unit": "حبه", "price": 2.1723, "type": "raw"}, {"name": "330 ml 7up", "unit": "حبه", "price": 2.1723, "type": "raw"}, {"name": "330 ml pepsi diet", "unit": "حبه", "price": 2.1723, "type": "raw"}, {"name": "330 ml 7up diet", "unit": "حبه", "price": 2.1723, "type": "raw"}, {"name": "Fryer Oil 5LTR Sunflower", "unit": "حبه", "price": 6.5, "type": "raw"}, {"name": "Tortilla Large ( 25CM*650GM*12 )", "unit": "حبه", "price": 0.6188, "type": "raw"}, {"name": "classic zatar   powder", "unit": "kg", "price": 35.0, "type": "raw"}, {"name": "white vinegar spoonz brand", "unit": "حبه", "price": 1.32, "type": "raw"}, {"name": "YOUGHRT", "unit": "حبه", "price": 3.8889, "type": "raw"}, {"name": "Diet bread farooj", "unit": "حبه", "price": 2.3318, "type": "raw"}, {"name": "Pest EGG", "unit": "حبه", "price": 1.111, "type": "raw"}, {"name": "egg", "unit": "حبه", "price": 0.5, "type": "raw"}, {"name": "tahina", "unit": "kg", "price": 22.7778, "type": "raw"}, {"name": "olive oil", "unit": "ltr", "price": 10.0, "type": "raw"}, {"name": "bread small", "unit": "pcs", "price": 1.0, "type": "raw"}, {"name": "Nasha from MAJED Food Trading", "unit": "bag", "price": 3.08, "type": "raw"}, {"name": "ketchub gallon", "unit": "ltr", "price": 3.5, "type": "raw"}, {"name": "tomato paste", "unit": "kg", "price": 6.77, "type": "raw"}, {"name": "hot sauce 88 ml", "unit": "pcs", "price": 1.05, "type": "raw"}, {"name": "rose water 400 ml", "unit": "ltr", "price": 4.15, "type": "raw"}, {"name": "afia oil 1.5 ltr", "unit": "-", "price": 11.8333, "type": "raw"}, {"name": "Aluminium paper sheet", "unit": "حبه", "price": 32.4714, "type": "packaging"}, {"name": "Packing sticker farooj", "unit": "حبه", "price": 52.0, "type": "packaging"}, {"name": "craft bag farooj india", "unit": "حبه", "price": 0.3932, "type": "packaging"}, {"name": "24oz plate", "unit": "حبه", "price": 0.34, "type": "packaging"}, {"name": "6oz cup and cover", "unit": "حبه", "price": 0.31, "type": "packaging"}, {"name": "250ml sauce cup farooj", "unit": "حبه", "price": 0.1, "type": "packaging"}, {"name": "250ml sauce lid farooj", "unit": "حبه", "price": 0.07, "type": "packaging"}, {"name": "Thermometer", "unit": "حبه", "price": 31.3281, "type": "packaging"}, {"name": "chef tshirt farooj", "unit": "حبه", "price": 35.5, "type": "packaging"}, {"name": "Chef jacket farooj", "unit": "حبه", "price": 55.0, "type": "packaging"}, {"name": "Abudi cup falcon", "unit": "حبه", "price": 0.14, "type": "packaging"}, {"name": "Abudi lid falcon", "unit": "حبه", "price": 0.14, "type": "packaging"}, {"name": "Barbecue firelight", "unit": "حبه", "price": 5.42, "type": "packaging"}, {"name": "8 oz cup and cover", "unit": "حبه", "price": 0.1259, "type": "packaging"}, {"name": "Farooj kids meal", "unit": "حبه", "price": 0.7118, "type": "packaging"}, {"name": "farooj SMALL fries box", "unit": "حبه", "price": 0.1916, "type": "packaging"}, {"name": "farooj bucket rice sleeve", "unit": "حبه", "price": 0.3398, "type": "packaging"}, {"name": "Gold sandwich box farooj", "unit": "حبه", "price": 0.4314, "type": "packaging"}, {"name": "sleeve gold sandwich", "unit": "حبه", "price": 0.3575, "type": "packaging"}, {"name": "Farooj MEAL Tikka sticker", "unit": "حبه", "price": 0.73, "type": "packaging"}, {"name": "Bamboo skewers 14inch 6mm", "unit": "حبه", "price": 0.06, "type": "packaging"}, {"name": "Farooj makanek sticker", "unit": "حبه", "price": 0.73, "type": "packaging"}, {"name": "Farooj abudi head sticker", "unit": "حبه", "price": 0.081, "type": "packaging"}, {"name": "Farooj SANDWICH Tikka sticker", "unit": "حبه", "price": 0.73, "type": "packaging"}, {"name": "Ramadan sticker farooj logo", "unit": "حبه", "price": 0.0909, "type": "packaging"}, {"name": "salad bowl 500ml", "unit": "حبه", "price": 0.3833, "type": "packaging"}, {"name": "barbecue jelli girll steel", "unit": "حبه", "price": 32.0, "type": "packaging"}, {"name": "Pasta Plate 16oz", "unit": "حبه", "price": 0.2467, "type": "packaging"}, {"name": "sticker for microwafe -by roll pcs", "unit": "حبه", "price": 70.0, "type": "packaging"}, {"name": "plastic sleeves white", "unit": "حبه", "price": 0.115, "type": "packaging"}, {"name": "farrooj potato sticker", "unit": "حبه", "price": 0.4617, "type": "packaging"}, {"name": "farooj shish tawouk sticker", "unit": "حبه", "price": 0.4463, "type": "packaging"}, {"name": "farrooj abo alabed sticker big", "unit": "حبه", "price": 0.4303, "type": "packaging"}, {"name": "farooj pickles sticker", "unit": "حبه", "price": 0.4391, "type": "packaging"}, {"name": "farrooj mix sticker", "unit": "حبه", "price": 0.4433, "type": "packaging"}, {"name": "farooj garlic sticker", "unit": "حبه", "price": 0.45, "type": "packaging"}, {"name": "farooj logo sticker", "unit": "حبه", "price": 0.45, "type": "packaging"}, {"name": "farooj salad sticker", "unit": "حبه", "price": 0.8695, "type": "packaging"}, {"name": "farooj homos sleeve", "unit": "حبه", "price": 0.2388, "type": "packaging"}, {"name": "farooj  meal sleeve", "unit": "حبه", "price": 0.2571, "type": "packaging"}, {"name": "farooj fries box", "unit": "حبه", "price": 0.2196, "type": "packaging"}, {"name": "black cont 58 oz faroj", "unit": "حبه", "price": 0.9297, "type": "packaging"}, {"name": "sauce cup  3.25 oz black", "unit": "حبه", "price": 0.046, "type": "packaging"}, {"name": "farooj meal box", "unit": "حبه", "price": 1.1477, "type": "packaging"}, {"name": "wax paper farooj by kg", "unit": "kg", "price": 18.0, "type": "packaging"}, {"name": "sticker 1lt farooj", "unit": "حبه", "price": 0.395, "type": "packaging"}, {"name": "Farooj Rice plate 32 Oz", "unit": "حبه", "price": 0.78, "type": "packaging"}, {"name": "Farooj Bottle 330 M.L with Cover", "unit": "حبه", "price": 0.3325, "type": "packaging"}, {"name": "Farooj Laban Cup Sticker", "unit": "حبه", "price": 0.0559, "type": "packaging"}, {"name": "Farooj kabab sticker", "unit": "حبه", "price": 1.0781, "type": "packaging"}, {"name": "Farooj rice sticker", "unit": "حبه", "price": 1.5, "type": "packaging"}, {"name": "Farooj craft bag brown", "unit": "حبه", "price": 0.58, "type": "packaging"}, {"name": "Sambosa sticker", "unit": "حبه", "price": 0.225, "type": "packaging"}, {"name": "Farooj sambosa box", "unit": "حبه", "price": 3.48, "type": "packaging"}, {"name": "lid for 3.25 oz sauce cup", "unit": "حبه", "price": 0.034, "type": "packaging"}, {"name": "farooj abou abd hot pot sleeve", "unit": "حبه", "price": 0.18, "type": "packaging"}, {"name": "clear printed bag farooj", "unit": "kg", "price": 9.7522, "type": "packaging"}, {"name": "al faroj leak proof rect container 24 oz for salad", "unit": "حبه", "price": 0.4082, "type": "packaging"}, {"name": "dome lid 14 and 16", "unit": "حبه", "price": 0.0531, "type": "packaging"}, {"name": "soufle container black 2oz", "unit": "حبه", "price": 0.0425, "type": "packaging"}, {"name": "paper chicken bucket", "unit": "حبه", "price": 1.1587, "type": "packaging"}, {"name": "Ramadan meal sticker farooj", "unit": "حبه", "price": 0.193, "type": "packaging"}, {"name": "Farooj Waraq Anab sticker", "unit": "حبه", "price": 0.1, "type": "packaging"}, {"name": "Farooj sandwich box", "unit": "حبه", "price": 0.2399, "type": "packaging"}, {"name": "Farooj Family Box", "unit": "حبه", "price": 1.78, "type": "packaging"}, {"name": "Farooj Kebbeh Sticker", "unit": "حبه", "price": 0.265, "type": "packaging"}, {"name": "Farooj sleeve 170 oz chicken bucket", "unit": "حبه", "price": 1.1977, "type": "packaging"}, {"name": "Farooj table paper", "unit": "حبه", "price": 16.9998, "type": "packaging"}, {"name": "Farooj meal box KWT", "unit": "حبه", "price": 0.6789, "type": "packaging"}, {"name": "roasting Bags pop", "unit": "حبه", "price": 1.9492, "type": "packaging"}, {"name": "Table cover 100*120CM", "unit": "حبه", "price": 5.75, "type": "packaging"}, {"name": "Farooj tray 40CM", "unit": "حبه", "price": 2.86, "type": "packaging"}, {"name": "Small paper chicken bucket", "unit": "حبه", "price": 1.11, "type": "packaging"}, {"name": "Sleeve 130oz chicken bucket", "unit": "حبه", "price": 1.15, "type": "packaging"}, {"name": "Roasted bag small", "unit": "حبه", "price": 1.6291, "type": "packaging"}, {"name": "Bucket rice plate", "unit": "حبه", "price": 0.2667, "type": "packaging"}, {"name": "Bucket rice lid", "unit": "حبه", "price": 0.2, "type": "packaging"}, {"name": "rocket leaves", "unit": "kg", "price": 5.0, "type": "raw"}, {"name": "Cucumber", "unit": "kg", "price": 5.9, "type": "raw"}, {"name": "zarar leaves", "unit": "kg", "price": 5.0, "type": "raw"}, {"name": "Cabbage", "unit": "kg", "price": 3.0, "type": "raw"}, {"name": "water cress (bakla)", "unit": "kg", "price": 5.0, "type": "raw"}, {"name": "white onion", "unit": "kg", "price": 6.0, "type": "raw"}, {"name": "potato fresh (big)", "unit": "kg", "price": 3.75, "type": "raw"}, {"name": "red onion", "unit": "kg", "price": 3.0, "type": "raw"}, {"name": "raddish red holland", "unit": "kg", "price": 3.25, "type": "raw"}, {"name": "pepper red", "unit": "kg", "price": 12.0, "type": "raw"}, {"name": "persley fresh", "unit": "kg", "price": 8.0, "type": "raw"}, {"name": "pepper green", "unit": "kg", "price": 5.0, "type": "raw"}, {"name": "tomato", "unit": "kg", "price": 7.0, "type": "raw"}, {"name": "garlic pealed", "unit": "kg", "price": 9.0, "type": "raw"}, {"name": "ice berg lettuce", "unit": "kg", "price": 8.75, "type": "raw"}, {"name": "cucumber small", "unit": "kg", "price": 3.0, "type": "raw"}, {"name": "cucumber", "unit": "kg", "price": 3.0, "type": "raw"}, {"name": "lemon", "unit": "kg", "price": 8.0, "type": "raw"}, {"name": "onion red", "unit": "kg", "price": 2.75, "type": "raw"}, {"name": "cabbage", "unit": "kg", "price": 2.0, "type": "raw"}, {"name": "hommos", "unit": "kg", "price": 10.25, "type": "raw"}, {"name": "grilled eggblanet", "unit": "kg", "price": 15.0, "type": "raw"}, {"name": "Cardmom 6mm", "unit": "kg", "price": 132.0, "type": "raw"}, {"name": "sun white rice", "unit": "kg", "price": 6.75, "type": "raw"}, {"name": "Summaq Hard", "unit": "kg", "price": 20.0, "type": "raw"}, {"name": "Garlic Powder", "unit": "kg", "price": 8.0, "type": "raw"}, {"name": "cinnamon tube", "unit": "kg", "price": 13.0, "type": "raw"}, {"name": "White Pepper Powder", "unit": "kg", "price": 45.0, "type": "raw"}, {"name": "Chicken Masala", "unit": "kg", "price": 15.0, "type": "raw"}, {"name": "Curry Masala", "unit": "kg", "price": 13.0, "type": "raw"}, {"name": "Cinnamon Powder", "unit": "kg", "price": 18.0, "type": "raw"}, {"name": "Ginger Powder", "unit": "kg", "price": 25.0, "type": "raw"}, {"name": "Dry Lemon Yellow", "unit": "kg", "price": 14.0, "type": "raw"}, {"name": "7 spices", "unit": "kg", "price": 27.0, "type": "raw"}, {"name": "Onion Powder", "unit": "kg", "price": 10.0, "type": "raw"}, {"name": "Smoked Paprika Powder", "unit": "kg", "price": 45.0, "type": "raw"}, {"name": "Lemon Powder", "unit": "kg", "price": 12.0, "type": "raw"}, {"name": "Thahinah (alameera)", "unit": "kg", "price": 115.0, "type": "raw"}, {"name": "Black Pepper Powder", "unit": "kg", "price": 34.0, "type": "raw"}, {"name": "Tej Patta Bay leaves", "unit": "kg", "price": 10.0, "type": "raw"}, {"name": "Crushed Chilly", "unit": "kg", "price": 17.0, "type": "raw"}, {"name": "Cloves whole", "unit": "kg", "price": 33.5, "type": "raw"}, {"name": "Salt", "unit": "kg", "price": 0.6, "type": "raw"}, {"name": "coriander powder", "unit": "kg", "price": 9.0, "type": "raw"}, {"name": "Cumin (jeera) powder", "unit": "kg", "price": 22.0, "type": "raw"}, {"name": "Cloves Powder", "unit": "kg", "price": 39.0, "type": "raw"}, {"name": "Paprika Powder", "unit": "kg", "price": 9.5, "type": "raw"}, {"name": "Chilly Powder Ameera", "unit": "kg", "price": 13.0, "type": "raw"}, {"name": "Lemon Salt", "unit": "kg", "price": 3.92, "type": "raw"}, {"name": "sweet Pepper Powder", "unit": "kg", "price": 35.0, "type": "raw"}, {"name": "Maggie chichen powder", "unit": "kg", "price": 38.0, "type": "raw"}, {"name": "rosmary", "unit": "kg", "price": 20.0, "type": "raw"}, {"name": "oregano", "unit": "kg", "price": 18.0, "type": "raw"}, {"name": "parsly", "unit": "kg", "price": 40.0, "type": "raw"}, {"name": "basil", "unit": "kg", "price": 18.0, "type": "raw"}, {"name": "wardi", "unit": "kg", "price": 13.6, "type": "raw"}, {"name": "mix", "unit": "kg", "price": 18.3, "type": "raw"}, {"name": "spicy", "unit": "kg", "price": 18.5, "type": "raw"}, {"name": "tawook", "unit": "kg", "price": 18.5, "type": "raw"}, {"name": "cajon", "unit": "kg", "price": 25.0, "type": "raw"}, {"name": "berry berry", "unit": "kg", "price": 25.0, "type": "raw"}, {"name": "tumiric", "unit": "kg", "price": 20.0, "type": "raw"}, {"name": "Fries Seasoning", "unit": "kg", "price": 15.81, "type": "raw"}, {"name": "Nutmeg Powder", "unit": "kg", "price": 29.0, "type": "raw"}, {"name": "Maqanek", "unit": "kg", "price": 17.78, "type": "raw"}, {"name": "Tekka", "unit": "kg", "price": 23.16, "type": "raw"}, {"name": "burghol", "unit": "kg", "price": 10.0, "type": "raw"}];
+const FACTORY_MARCH_2026_MATERIALS = [{"name": "mix arabic pickle 6kg", "unit": "حبه", "price": 4.2, "type": "raw"}, {"name": "arabic cucumber pickles", "unit": "حبه", "price": 5.9, "type": "raw"}, {"name": "Shurooq oil 5ltr", "unit": "حبه", "price": 6.5, "type": "raw"}, {"name": "330 ml pepsi", "unit": "حبه", "price": 2.1723, "type": "raw"}, {"name": "330 ml dew", "unit": "حبه", "price": 2.1723, "type": "raw"}, {"name": "330 ml 7up", "unit": "حبه", "price": 2.1723, "type": "raw"}, {"name": "330 ml pepsi diet", "unit": "حبه", "price": 2.1723, "type": "raw"}, {"name": "330 ml 7up diet", "unit": "حبه", "price": 2.1723, "type": "raw"}, {"name": "Fryer Oil 5LTR Sunflower", "unit": "حبه", "price": 6.5, "type": "raw"}, {"name": "Tortilla Large ( 25CM*650GM*12 )", "unit": "حبه", "price": 0.6188, "type": "raw"}, {"name": "classic zatar   powder", "unit": "kg", "price": 35.0, "type": "raw"}, {"name": "white vinegar spoonz brand", "unit": "حبه", "price": 1.32, "type": "raw"}, {"name": "YOUGHRT", "unit": "حبه", "price": 3.8889, "type": "raw"}, {"name": "Diet bread farooj", "unit": "حبه", "price": 2.3318, "type": "raw"}, {"name": "Pest EGG", "unit": "حبه", "price": 1.111, "type": "raw"}, {"name": "egg", "unit": "حبه", "price": 0.5, "type": "raw"}, {"name": "tahina", "unit": "kg", "price": 22.7778, "type": "raw"}, {"name": "olive oil", "unit": "ltr", "price": 10.0, "type": "raw"}, {"name": "bread small", "unit": "pcs", "price": 1.0, "type": "raw"}, {"name": "Nasha from MAJED Food Trading", "unit": "bag", "price": 3.08, "type": "raw"}, {"name": "ketchub gallon", "unit": "ltr", "price": 3.5, "type": "raw"}, {"name": "tomato paste", "unit": "kg", "price": 6.77, "type": "raw"}, {"name": "hot sauce 88 ml", "unit": "pcs", "price": 1.05, "type": "raw"}, {"name": "rose water 400 ml", "unit": "ltr", "price": 4.15, "type": "raw"}, {"name": "afia oil 1.5 ltr", "unit": "-", "price": 11.8333, "type": "raw"}, {"name": "Aluminium paper sheet", "unit": "حبه", "price": 32.4714, "type": "packaging"}, {"name": "Packing sticker farooj", "unit": "حبه", "price": 52.0, "type": "packaging"}, {"name": "craft bag farooj india", "unit": "حبه", "price": 0.3932, "type": "packaging"}, {"name": "24oz plate", "unit": "حبه", "price": 0.34, "type": "packaging"}, {"name": "6oz cup and cover", "unit": "حبه", "price": 0.31, "type": "packaging"}, {"name": "250ml sauce cup farooj", "unit": "حبه", "price": 0.1, "type": "packaging"}, {"name": "250ml sauce lid farooj", "unit": "حبه", "price": 0.07, "type": "packaging"}, {"name": "Thermometer", "unit": "حبه", "price": 31.3281, "type": "packaging"}, {"name": "chef tshirt farooj", "unit": "حبه", "price": 35.5, "type": "packaging"}, {"name": "Chef jacket farooj", "unit": "حبه", "price": 55.0, "type": "packaging"}, {"name": "Abudi cup falcon", "unit": "حبه", "price": 0.14, "type": "packaging"}, {"name": "Abudi lid falcon", "unit": "حبه", "price": 0.14, "type": "packaging"}, {"name": "Barbecue firelight", "unit": "حبه", "price": 5.42, "type": "packaging"}, {"name": "8 oz cup and cover", "unit": "حبه", "price": 0.1259, "type": "packaging"}, {"name": "Farooj kids meal", "unit": "حبه", "price": 0.7118, "type": "packaging"}, {"name": "farooj SMALL fries box", "unit": "حبه", "price": 0.1916, "type": "packaging"}, {"name": "farooj bucket rice sleeve", "unit": "حبه", "price": 0.3398, "type": "packaging"}, {"name": "Gold sandwich box farooj", "unit": "حبه", "price": 0.4314, "type": "packaging"}, {"name": "sleeve gold sandwich", "unit": "حبه", "price": 0.3575, "type": "packaging"}, {"name": "Farooj MEAL Tikka sticker", "unit": "حبه", "price": 0.73, "type": "packaging"}, {"name": "Bamboo skewers 14inch 6mm", "unit": "حبه", "price": 0.06, "type": "packaging"}, {"name": "Farooj makanek sticker", "unit": "حبه", "price": 0.73, "type": "packaging"}, {"name": "Farooj abudi head sticker", "unit": "حبه", "price": 0.081, "type": "packaging"}, {"name": "Farooj SANDWICH Tikka sticker", "unit": "حبه", "price": 0.73, "type": "packaging"}, {"name": "Ramadan sticker farooj logo", "unit": "حبه", "price": 0.0909, "type": "packaging"}, {"name": "salad bowl 500ml", "unit": "حبه", "price": 0.3833, "type": "packaging"}, {"name": "barbecue jelli girll steel", "unit": "حبه", "price": 32.0, "type": "packaging"}, {"name": "Pasta Plate 16oz", "unit": "حبه", "price": 0.2467, "type": "packaging"}, {"name": "sticker for microwafe -by roll pcs", "unit": "حبه", "price": 70.0, "type": "packaging"}, {"name": "plastic sleeves white", "unit": "حبه", "price": 0.115, "type": "packaging"}, {"name": "farrooj potato sticker", "unit": "حبه", "price": 0.4617, "type": "packaging"}, {"name": "farooj shish tawouk sticker", "unit": "حبه", "price": 0.4463, "type": "packaging"}, {"name": "farrooj abo alabed sticker big", "unit": "حبه", "price": 0.4303, "type": "packaging"}, {"name": "farooj pickles sticker", "unit": "حبه", "price": 0.4391, "type": "packaging"}, {"name": "farrooj mix sticker", "unit": "حبه", "price": 0.4433, "type": "packaging"}, {"name": "farooj garlic sticker", "unit": "حبه", "price": 0.45, "type": "packaging"}, {"name": "farooj logo sticker", "unit": "حبه", "price": 0.45, "type": "packaging"}, {"name": "farooj salad sticker", "unit": "حبه", "price": 0.8695, "type": "packaging"}, {"name": "farooj homos sleeve", "unit": "حبه", "price": 0.2388, "type": "packaging"}, {"name": "farooj  meal sleeve", "unit": "حبه", "price": 0.2571, "type": "packaging"}, {"name": "farooj fries box", "unit": "حبه", "price": 0.2196, "type": "packaging"}, {"name": "black cont 58 oz faroj", "unit": "حبه", "price": 0.9297, "type": "packaging"}, {"name": "sauce cup  3.25 oz black", "unit": "حبه", "price": 0.046, "type": "packaging"}, {"name": "farooj meal box", "unit": "حبه", "price": 1.1477, "type": "packaging"}, {"name": "wax paper farooj by kg", "unit": "kg", "price": 18.0, "type": "packaging"}, {"name": "sticker 1lt farooj", "unit": "حبه", "price": 0.395, "type": "packaging"}, {"name": "Farooj Rice plate 32 Oz", "unit": "حبه", "price": 0.78, "type": "packaging"}, {"name": "Farooj Bottle 330 M.L with Cover", "unit": "حبه", "price": 0.3325, "type": "packaging"}, {"name": "Farooj Laban Cup Sticker", "unit": "حبه", "price": 0.0559, "type": "packaging"}, {"name": "Farooj kabab sticker", "unit": "حبه", "price": 1.0781, "type": "packaging"}, {"name": "Farooj rice sticker", "unit": "حبه", "price": 1.5, "type": "packaging"}, {"name": "Farooj craft bag brown", "unit": "حبه", "price": 0.58, "type": "packaging"}, {"name": "Sambosa sticker", "unit": "حبه", "price": 0.225, "type": "packaging"}, {"name": "Farooj sambosa box", "unit": "حبه", "price": 3.48, "type": "packaging"}, {"name": "lid for 3.25 oz sauce cup", "unit": "حبه", "price": 0.034, "type": "packaging"}, {"name": "farooj abou abd hot pot sleeve", "unit": "حبه", "price": 0.18, "type": "packaging"}, {"name": "clear printed bag farooj", "unit": "kg", "price": 9.7522, "type": "packaging"}, {"name": "al faroj leak proof rect container 24 oz for salad", "unit": "حبه", "price": 0.4082, "type": "packaging"}, {"name": "dome lid 14 and 16", "unit": "حبه", "price": 0.0531, "type": "packaging"}, {"name": "soufle container black 2oz", "unit": "حبه", "price": 0.0425, "type": "packaging"}, {"name": "paper chicken bucket", "unit": "حبه", "price": 1.1587, "type": "packaging"}, {"name": "Ramadan meal sticker farooj", "unit": "حبه", "price": 0.193, "type": "packaging"}, {"name": "Farooj Waraq Anab sticker", "unit": "حبه", "price": 0.1, "type": "packaging"}, {"name": "Farooj sandwich box", "unit": "حبه", "price": 0.2399, "type": "packaging"}, {"name": "Farooj Family Box", "unit": "حبه", "price": 1.78, "type": "packaging"}, {"name": "Farooj Kebbeh Sticker", "unit": "حبه", "price": 0.265, "type": "packaging"}, {"name": "Farooj sleeve 170 oz chicken bucket", "unit": "حبه", "price": 1.1977, "type": "packaging"}, {"name": "Farooj table paper", "unit": "حبه", "price": 16.9998, "type": "packaging"}, {"name": "Farooj meal box KWT", "unit": "حبه", "price": 0.6789, "type": "packaging"}, {"name": "roasting Bags pop", "unit": "حبه", "price": 1.9492, "type": "packaging"}, {"name": "Table cover 100*120CM", "unit": "حبه", "price": 5.75, "type": "packaging"}, {"name": "Farooj tray 40CM", "unit": "حبه", "price": 2.86, "type": "packaging"}, {"name": "Small paper chicken bucket", "unit": "حبه", "price": 1.11, "type": "packaging"}, {"name": "Sleeve 130oz chicken bucket", "unit": "حبه", "price": 1.15, "type": "packaging"}, {"name": "Roasted bag small", "unit": "حبه", "price": 1.6291, "type": "packaging"}, {"name": "Bucket rice plate", "unit": "حبه", "price": 0.2667, "type": "packaging"}, {"name": "Bucket rice lid", "unit": "حبه", "price": 0.2, "type": "packaging"}, {"name": "rocket leaves", "unit": "kg", "price": 5.0, "type": "raw"}, {"name": "Cucumber", "unit": "kg", "price": 5.9, "type": "raw"}, {"name": "zarar leaves", "unit": "kg", "price": 5.0, "type": "raw"}, {"name": "Cabbage", "unit": "kg", "price": 3.0, "type": "raw"}, {"name": "water cress (bakla)", "unit": "kg", "price": 5.0, "type": "raw"}, {"name": "white onion", "unit": "kg", "price": 6.0, "type": "raw"}, {"name": "potato fresh (big)", "unit": "kg", "price": 3.75, "type": "raw"}, {"name": "red onion", "unit": "kg", "price": 3.0, "type": "raw"}, {"name": "raddish red holland", "unit": "kg", "price": 3.25, "type": "raw"}, {"name": "pepper red", "unit": "kg", "price": 12.0, "type": "raw"}, {"name": "persley fresh", "unit": "kg", "price": 8.0, "type": "raw"}, {"name": "pepper green", "unit": "kg", "price": 5.0, "type": "raw"}, {"name": "tomato", "unit": "kg", "price": 7.0, "type": "raw"}, {"name": "garlic pealed", "unit": "kg", "price": 9.0, "type": "raw"}, {"name": "ice berg lettuce", "unit": "kg", "price": 8.75, "type": "raw"}, {"name": "cucumber small", "unit": "kg", "price": 3.0, "type": "raw"}, {"name": "cucumber", "unit": "kg", "price": 3.0, "type": "raw"}, {"name": "lemon", "unit": "kg", "price": 8.0, "type": "raw"}, {"name": "onion red", "unit": "kg", "price": 2.75, "type": "raw"}, {"name": "cabbage", "unit": "kg", "price": 2.0, "type": "raw"}, {"name": "hommos", "unit": "kg", "price": 10.25, "type": "raw"}, {"name": "grilled eggblanet", "unit": "kg", "price": 15.0, "type": "raw"}, {"name": "Cardmom 6mm", "unit": "kg", "price": 132.0, "type": "raw"}, {"name": "sun white rice", "unit": "kg", "price": 6.75, "type": "raw"}, {"name": "Summaq Hard", "unit": "kg", "price": 20.0, "type": "raw"}, {"name": "Garlic Powder", "unit": "kg", "price": 8.0, "type": "raw"}, {"name": "cinnamon tube", "unit": "kg", "price": 13.0, "type": "raw"}, {"name": "White Pepper Powder", "unit": "kg", "price": 45.0, "type": "raw"}, {"name": "Chicken Masala", "unit": "kg", "price": 15.0, "type": "raw"}, {"name": "Curry Masala", "unit": "kg", "price": 13.0, "type": "raw"}, {"name": "Cinnamon Powder", "unit": "kg", "price": 18.0, "type": "raw"}, {"name": "Ginger Powder", "unit": "kg", "price": 25.0, "type": "raw"}, {"name": "Dry Lemon Yellow", "unit": "kg", "price": 14.0, "type": "raw"}, {"name": "7 spices", "unit": "kg", "price": 27.0, "type": "raw"}, {"name": "Onion Powder", "unit": "kg", "price": 10.0, "type": "raw"}, {"name": "Smoked Paprika Powder", "unit": "kg", "price": 45.0, "type": "raw"}, {"name": "Lemon Powder", "unit": "kg", "price": 12.0, "type": "raw"}, {"name": "Thahinah (alameera)", "unit": "kg", "price": 115.0, "type": "raw"}, {"name": "Black Pepper Powder", "unit": "kg", "price": 34.0, "type": "raw"}, {"name": "Tej Patta Bay leaves", "unit": "kg", "price": 10.0, "type": "raw"}, {"name": "Crushed Chilly", "unit": "kg", "price": 17.0, "type": "raw"}, {"name": "Cloves whole", "unit": "kg", "price": 33.5, "type": "raw"}, {"name": "Salt", "unit": "kg", "price": 0.6, "type": "raw"}, {"name": "coriander powder", "unit": "kg", "price": 9.0, "type": "raw"}, {"name": "Cumin (jeera) powder", "unit": "kg", "price": 22.0, "type": "raw"}, {"name": "Cloves Powder", "unit": "kg", "price": 39.0, "type": "raw"}, {"name": "Paprika Powder", "unit": "kg", "price": 9.5, "type": "raw"}, {"name": "Chilly Powder Ameera", "unit": "kg", "price": 13.0, "type": "raw"}, {"name": "Lemon Salt", "unit": "kg", "price": 3.92, "type": "raw"}, {"name": "sweet Pepper Powder", "unit": "kg", "price": 35.0, "type": "raw"}, {"name": "Maggie chichen powder", "unit": "kg", "price": 38.0, "type": "raw"}, {"name": "rosmary", "unit": "kg", "price": 20.0, "type": "raw"}, {"name": "oregano", "unit": "kg", "price": 18.0, "type": "raw"}, {"name": "parsly", "unit": "kg", "price": 40.0, "type": "raw"}, {"name": "basil", "unit": "kg", "price": 18.0, "type": "raw"}, {"name": "wardi", "unit": "kg", "price": 13.6, "type": "raw"}, {"name": "mix", "unit": "kg", "price": 18.3, "type": "raw"}, {"name": "spicy", "unit": "kg", "price": 18.5, "type": "raw"}, {"name": "tawook", "unit": "kg", "price": 18.5, "type": "raw"}, {"name": "cajon", "unit": "kg", "price": 25.0, "type": "raw"}, {"name": "berry berry", "unit": "kg", "price": 25.0, "type": "raw"}, {"name": "tumiric", "unit": "kg", "price": 20.0, "type": "raw"}, {"name": "Fries Seasoning", "unit": "kg", "price": 15.81, "type": "raw"}, {"name": "Nutmeg Powder", "unit": "kg", "price": 29.0, "type": "raw"}, {"name": "Maqanek", "unit": "kg", "price": 17.78, "type": "raw"}, {"name": "Tekka", "unit": "kg", "price": 23.16, "type": "raw"}, {"name": "burghol", "unit": "kg", "price": 10.0, "type": "raw"}];
+
+const PRESET_RECIPES = [{"id": "r_0", "name": "طحينه", "yieldQty": 2.0, "yieldUnit": "كيلو", "ingredients": [{"name": "طحينة", "unit": "كيلو", "qty": 1.0, "price": 16.43}, {"name": "ليمون", "unit": "كيلو", "qty": 0.4, "price": 25.0}, {"name": "ثوم", "unit": "ك", "qty": 0.01, "price": 15.0}, {"name": "ملح", "unit": "ك", "qty": 0.02, "price": 1.2}, {"name": "مياه", "unit": "لتر", "qty": 0.6, "price": 0.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_1", "name": "حمص", "yieldQty": 8.5, "yieldUnit": "كيلو", "ingredients": [{"name": "حمص مسلوق", "unit": "كيلو", "qty": 5.0, "price": 4.99789}, {"name": "طحينة شوباكس", "unit": "كيلو", "qty": 1.6, "price": 22.78}, {"name": "زيت", "unit": "لتر", "qty": 1.5, "price": 6.0}, {"name": "ملح", "unit": "كيلو", "qty": 0.12, "price": 0.72}, {"name": "ملح ليمون", "unit": "كيلو", "qty": 0.06, "price": 11.0}, {"name": "ثلج", "unit": "ك", "qty": 0.8, "price": 0.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_2", "name": "صوص تبوله", "yieldQty": 2.0, "yieldUnit": "كيلو", "ingredients": [{"name": "ليمون", "unit": "كيلو", "qty": 2.0, "price": 8.0}, {"name": "زيت زيتون", "unit": "لتر", "qty": 1.0, "price": 13.43}, {"name": "ملح", "unit": "ك", "qty": 0.06, "price": 0.72}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_3", "name": "تبوله مصنع", "yieldQty": 0.2, "yieldUnit": "كيلو", "ingredients": [{"name": "بقدونس", "unit": "كيلو", "qty": 0.1, "price": 5.0}, {"name": "طماطم", "unit": "كيلو", "qty": 0.085, "price": 4.0}, {"name": "بصل", "unit": "كيلو", "qty": 0.01, "price": 1.45}, {"name": "برغل", "unit": "كيلو", "qty": 0.005, "price": 7.98}, {"name": "صوص تبولة", "unit": "كيلو", "qty": 0.05, "price": 14.7366}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_4", "name": "صوص فتوش", "yieldQty": 1.8, "yieldUnit": "كيلو", "ingredients": [{"name": "ليمون", "unit": "كيلو", "qty": 0.4, "price": 8.0}, {"name": "زيت زيتون", "unit": "لتر", "qty": 0.8, "price": 13.43}, {"name": "دبس رمان", "unit": "لتر", "qty": 0.6, "price": 27.77333}, {"name": "ملح", "unit": "ك", "qty": 0.03, "price": 0.72}, {"name": "سماق", "unit": "ك", "qty": 0.01, "price": 20.0}, {"name": "خل ابيض", "unit": "لتر", "qty": 0.2, "price": 1.125}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_5", "name": "فتوش", "yieldQty": 0.25, "yieldUnit": "كيلو", "ingredients": [{"name": "خس", "unit": "كيلو", "qty": 0.1, "price": 5.0}, {"name": "طماطم", "unit": "كيلو", "qty": 0.07, "price": 2.8}, {"name": "خيار", "unit": "كيلو", "qty": 0.03, "price": 3.0}, {"name": "بقدونس", "unit": "كيلو", "qty": 0.02, "price": 5.0}, {"name": "فلفل اخضر", "unit": "كيلو", "qty": 0.025, "price": 4.5}, {"name": "بصل اخضر", "unit": "كيلو", "qty": 0.0, "price": 6.0}, {"name": "نعناع", "unit": "كيلو", "qty": 0.002, "price": 5.0}, {"name": "فجل", "unit": "كيلو", "qty": 0.01, "price": 5.0}, {"name": "زعتر اخضر", "unit": "كيلو", "qty": 0.002, "price": 4.0}, {"name": "جرجير", "unit": "كيلو", "qty": 0.002, "price": 5.0}, {"name": "باقلو", "unit": "كيلو", "qty": 0.002, "price": 6.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_6", "name": "ثوميه", "yieldQty": 10.0, "yieldUnit": "كيلو", "ingredients": [{"name": "نشا مطبوخ", "unit": "كيلو", "qty": 3.5, "price": 0.48434}, {"name": "ثوم فريش", "unit": "كيلو", "qty": 0.2, "price": 9.0}, {"name": "بيض", "unit": "حبة", "qty": 18.0, "price": 0.54}, {"name": "ملح", "unit": "كيلو", "qty": 0.15, "price": 0.72}, {"name": "ملح ليمون", "unit": "كيلو", "qty": 0.05, "price": 11.0}, {"name": "ثلج", "unit": "كيلو", "qty": 0.5, "price": 0.0}, {"name": "زيت عافية", "unit": "لتر", "qty": 3.0, "price": 10.84}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_7", "name": "صوص كاجون", "yieldQty": 4.0, "yieldUnit": "كيلو", "ingredients": [{"name": "صوص بيتزا", "unit": "كيلو", "qty": 1.275, "price": 19.5}, {"name": "زبده", "unit": "كيلو", "qty": 0.2, "price": 33.0}, {"name": "ملح", "unit": "حبة", "qty": 0.03, "price": 1.2}, {"name": "بهارات كاجون", "unit": "كيلو", "qty": 0.15, "price": 27.5}, {"name": "ثوم", "unit": "كيلو", "qty": 0.25, "price": 15.0}, {"name": "بصل", "unit": "كيلو", "qty": 0.15, "price": 3.0}, {"name": "ليمون عصير", "unit": "لتر", "qty": 0.7, "price": 25.0}, {"name": "صويا صوص", "unit": "لتر", "qty": 0.06, "price": 34.76667}, {"name": "حليب", "unit": "لتر", "qty": 0.5, "price": 4.16667}, {"name": "تشيلي بودر", "unit": "كيلو", "qty": 0.015, "price": 10.5}, {"name": "مياه", "unit": "كيلو", "qty": 1.25, "price": 0.0}, {"name": "هوت وصوص", "unit": "كيلو", "qty": 0.264, "price": 12.05}, {"name": "راما كريم", "unit": "كيلو", "qty": 0.5, "price": 14.5}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_8", "name": "صوص بيري بيري", "yieldQty": 3.7, "yieldUnit": "كيلو", "ingredients": [{"name": "كريمه", "unit": "كيلو", "qty": 2.0, "price": 14.5}, {"name": "ثوم فريش", "unit": "كيلو", "qty": 0.25, "price": 15.0}, {"name": "ليمون عصير", "unit": "حبة", "qty": 0.35, "price": 25.0}, {"name": "ملح", "unit": "كيلو", "qty": 0.03, "price": 1.2}, {"name": "زبده", "unit": "كيلو", "qty": 0.2, "price": 33.0}, {"name": "بهارات بيري بيري", "unit": "كيلو", "qty": 0.15, "price": 21.0}, {"name": "مياه", "unit": "لتر", "qty": 1.25, "price": 0.0}, {"name": "موتزريلا", "unit": "كيلو", "qty": 0.15, "price": 29.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_9", "name": "ثوميه دبي", "yieldQty": 10.0, "yieldUnit": "كيلو", "ingredients": [{"name": "نشا مطبوخ", "unit": "كيلو", "qty": 3.5, "price": 0.48434}, {"name": "ثوم فريش", "unit": "كيلو", "qty": 0.2, "price": 9.0}, {"name": "بيض", "unit": "حبة", "qty": 18.0, "price": 1.11}, {"name": "ملح", "unit": "كيلو", "qty": 0.15, "price": 0.72}, {"name": "ملح ليمون", "unit": "كيلو", "qty": 0.05, "price": 11.0}, {"name": "ثلج", "unit": "كيلو", "qty": 0.5, "price": 0.0}, {"name": "زيت عافية", "unit": "لتر", "qty": 3.0, "price": 10.84}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_10", "name": "سبايسي", "yieldQty": 7.8, "yieldUnit": "كيلو", "ingredients": [{"name": "بهار سبايسي", "unit": "كيلو", "qty": 0.4, "price": 18.5}, {"name": "زيت", "unit": "لتر", "qty": 6.0, "price": 6.0}, {"name": "بيض", "unit": "حبة", "qty": 30.0, "price": 0.54}, {"name": "ثلج", "unit": "كيلو", "qty": 1.5, "price": 0.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_11", "name": "سبايسي دبي", "yieldQty": 7.8, "yieldUnit": "كيلو", "ingredients": [{"name": "بهار سبايسي", "unit": "كيلو", "qty": 0.4, "price": 18.5}, {"name": "زيت", "unit": "لتر", "qty": 6.0, "price": 6.0}, {"name": "بيض", "unit": "حبة", "qty": 30.0, "price": 1.11}, {"name": "ثلج", "unit": "كيلو", "qty": 1.5, "price": 0.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_12", "name": "كوكتيل دجاج", "yieldQty": 5.4, "yieldUnit": "كيلو", "ingredients": [{"name": "بهار كوكتيل", "unit": "كيلو", "qty": 0.4, "price": 18.3}, {"name": "زيت", "unit": "لتر", "qty": 1.5, "price": 6.0}, {"name": "خل", "unit": "لتر", "qty": 1.0, "price": 1.125}, {"name": "مياه", "unit": "لتر", "qty": 1.0, "price": 0.0}, {"name": "كاتشب  - جالون", "unit": "كيلو", "qty": 0.75, "price": 3.5}, {"name": "معجون طماطم", "unit": "كيلو", "qty": 0.75, "price": 4.56}, {"name": "ثوم فريش مقشر", "unit": "كيلو", "qty": 0.4, "price": 9.0}, {"name": "شطه حارة - داقوس", "unit": "حبة", "qty": 2.0, "price": 0.805}, {"name": "زيت زيتون", "unit": "لتر", "qty": 0.4, "price": 14.06}, {"name": "ملح", "unit": "كيلو", "qty": 0.2, "price": 0.72}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_13", "name": "كوكتيل ساندوتش", "yieldQty": 4.3, "yieldUnit": "كيلو", "ingredients": [{"name": "سماق", "unit": "كيلو", "qty": 0.16, "price": 18.0}, {"name": "بابريكا", "unit": "ك", "qty": 0.15, "price": 9.5}, {"name": "ملح ليمون", "unit": "ك", "qty": 0.12, "price": 11.0}, {"name": "ملح", "unit": "ك", "qty": 0.03, "price": 0.44}, {"name": "زنجبيل مطحون", "unit": "كيلو", "qty": 0.01, "price": 18.0}, {"name": "بيض", "unit": "حبة", "qty": 6.0, "price": 0.54}, {"name": "خل ابيض", "unit": "لتر", "qty": 0.01, "price": 1.12}, {"name": "زيت", "unit": "لتر", "qty": 1.5, "price": 6.0}, {"name": "مياه", "unit": "لتر", "qty": 2.0, "price": 0.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_14", "name": "بيواز", "yieldQty": 2.0, "yieldUnit": "كيلو", "ingredients": [{"name": "بقدونس", "unit": "-", "qty": 2.0, "price": 5.0}, {"name": "بصل ابيض", "unit": "-", "qty": 1.0, "price": 4.5}, {"name": "سماق", "unit": "-", "qty": 0.001, "price": 20.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_15", "name": "صوص طاووق", "yieldQty": 9.0, "yieldUnit": "كيلو", "ingredients": [{"name": "بهار طاووق", "unit": "كيلو", "qty": 0.4, "price": 18.5}, {"name": "زيت", "unit": "لتر", "qty": 4.5, "price": 10.84}, {"name": "ليمون", "unit": "كيلو", "qty": 0.6, "price": 8.0}, {"name": "كاتشب  - جالون", "unit": "كيلو", "qty": 0.75, "price": 4.5}, {"name": "معجون طماطم", "unit": "كيلو", "qty": 0.75, "price": 4.56}, {"name": "ثوم فريش مقشر", "unit": "كيلو", "qty": 0.4, "price": 9.0}, {"name": "شطه حارة - داقوس", "unit": "حبة", "qty": 2.0, "price": 0.805}, {"name": "زيت زيتون", "unit": "لتر", "qty": 0.4, "price": 13.43}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_16", "name": "متبل", "yieldQty": 7.0, "yieldUnit": "كيلو", "ingredients": [{"name": "باذنجان مثلج", "unit": "كيلو", "qty": 4.0, "price": 16.0}, {"name": "طحينة", "unit": "كيلو", "qty": 1.7, "price": 22.78}, {"name": "ثوم فريش", "unit": "كيلو", "qty": 0.06, "price": 9.0}, {"name": "ملح", "unit": "كيلو", "qty": 0.1, "price": 0.72}, {"name": "ملح ليمون", "unit": "كيلو", "qty": 0.05, "price": 11.0}, {"name": "ثلج", "unit": "كيلو", "qty": 0.0, "price": 0.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_17", "name": "بهار البطاطا", "yieldQty": 0.4, "yieldUnit": "كيلو", "ingredients": [{"name": "ملح", "unit": "كيلو", "qty": 0.1, "price": 0.44}, {"name": "فلفل اسود", "unit": "كيلو", "qty": 0.06, "price": 34.0}, {"name": "فلفل ابيض", "unit": "كيلو", "qty": 0.06, "price": 42.0}, {"name": "بابريكا", "unit": "كيلو", "qty": 0.16, "price": 9.5}, {"name": "ثوم بودر", "unit": "كيلو", "qty": 0.02, "price": 10.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_18", "name": "دجاج مسحب", "yieldQty": 20.0, "yieldUnit": "كيلو", "ingredients": [{"name": "دجاج مسحب", "unit": "-", "qty": 20.0, "price": 15.0}, {"name": "صوص كوكتيل", "unit": "-", "qty": 1.5, "price": 7.72741}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_19", "name": "دجاج طاووق", "yieldQty": 20.0, "yieldUnit": "كيلو", "ingredients": [{"name": "دجاج طاووق", "unit": "كيلو", "qty": 20.0, "price": 17.0}, {"name": "صوص طاووق", "unit": "كيلو", "qty": 1.5, "price": 8.70633}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_20", "name": "دجاج افخاد", "yieldQty": 20.0, "yieldUnit": "كيلو", "ingredients": [{"name": "دجاج افخاد", "unit": "كيلو", "qty": 20.0, "price": 20.0}, {"name": "صوص افخاد", "unit": "كيلو", "qty": 1.5, "price": 5.9812}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_21", "name": "فروج كامل", "yieldQty": 1.1, "yieldUnit": "كيلو", "ingredients": [{"name": "دجاجة كامله", "unit": "كيلو", "qty": 1.1, "price": 15.0}, {"name": "صوص كوكتيل دجاج", "unit": "كيلو", "qty": 0.1, "price": 7.72741}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_22", "name": "صوص وردي", "yieldQty": 7.8, "yieldUnit": "كيلو", "ingredients": [{"name": "بهار وردى", "unit": "كيلو", "qty": 0.44, "price": 14.0}, {"name": "زيت", "unit": "لتر", "qty": 6.0, "price": 6.0}, {"name": "بيض", "unit": "حبة", "qty": 30.0, "price": 0.54}, {"name": "ثلج", "unit": "كيلو", "qty": 1.5, "price": 0.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}, {"id": "r_23", "name": "وردي دبي", "yieldQty": 7.8, "yieldUnit": "كيلو", "ingredients": [{"name": "بهار وردى", "unit": "كيلو", "qty": 0.44, "price": 14.0}, {"name": "زيت", "unit": "لتر", "qty": 6.0, "price": 6.0}, {"name": "بيض", "unit": "حبة", "qty": 30.0, "price": 1.11}, {"name": "ثلج", "unit": "كيلو", "qty": 1.5, "price": 0.0}], "updatedAt": "2026-07-20T00:00:00.000Z"}];
+
+async function gsRequest(params) {
+  const res = await fetch(GSCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ ...params, token: SECRET_TOKEN }).toString()
+  });
+  if (!res.ok) throw new Error('تعذر الاتصال بالسيرفر');
+  const data = await res.json();
+  if (!data.success && data.error && data.error !== 'not_found') throw new Error(data.error);
+  return data;
+}
+async function gsSet(key, valueStr) {
+  const result = await gsRequest({ action: 'set', key, value: valueStr });
+  return result.success ? { key, value: valueStr } : null;
+}
+async function gsGet(key) {
+  const result = await gsRequest({ action: 'get', key });
+  if (!result.success) return null;
+  return { key, value: result.value };
+}
+async function gsList(prefix) {
+  const result = await gsRequest({ action: 'list', prefix });
+  return { keys: (result.success ? result.keys : []) };
+}
+async function gsDelete(key) {
+  const result = await gsRequest({ action: 'delete', key });
+  return !!result.success;
+}
+
+let materialsCatalog = [];
+let materialFilter = 'all';
+let editingMaterialName = null;
+let recipesIndex = {}; // id -> recipe object
+let recipeCategories = ['لحوم', 'صوصات', 'مقبلات', 'سندوتشات', 'سلطات', 'مشروبات', 'أخرى'];
+let currentRecipeCategoryFilter = 'الكل';
+let editingRecipeCategoryName = null;
+let materialGroups = ['لحوم', 'صوصات', 'خضار', 'بهارات', 'تعبئة', 'أخرى'];
+let selectedMaterials = new Set();
+let currentMaterialGroupFilter = 'الكل';
+let editingMaterialGroupName = null;
+
+// يحسب تكلفة الوحدة من ريسيبي (بيدخل جوه أي ريسيبيهات تانية مستخدمة كمكوّنات، تلقائي وبشكل متداخل)
+function getRecipeUnitCost(recipeId, visited) {
+  visited = visited || new Set();
+  if (visited.has(recipeId)) return 0; // حماية من دائرة مراجع لبعضها
+  visited.add(recipeId);
+  const recipe = recipesIndex[recipeId];
+  if (!recipe) return 0;
+
+  let total = 0;
+  (recipe.ingredients || []).forEach(ing => {
+    const price = ing.sourceRecipeId ? getRecipeUnitCost(ing.sourceRecipeId, new Set(visited)) : (ing.price || 0);
+    total += ing.qty * price;
+  });
+  (recipe.packaging || []).forEach(ing => { total += ing.qty * (ing.price || 0); });
+
+  const yieldQty = parseFloat(recipe.yieldQty) || 1;
+  return total / yieldQty;
+}
+
+let currentRecipeId = null;
+let currentIngredients = []; // [{name, unit, qty, price}]
+let currentPackaging = []; // [{name, unit, qty, price}]
+let lastScaleResult = null;
+
+function todayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+
+let currentFactoryInvData = {}; // { materialName: qty }
+let currentFactoryInvGroupFilter = 'الكل';
+
+function slugId() {
+  return 'r_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+let currentAppPassword = APP_PASSWORD; // كلمة السر الحالية، ممكن تتغيّر من الإعدادات
+let appPasswordLoaded = false;
+
+async function loadAppPassword() {
+  if (appPasswordLoaded) return;
+  try {
+    const res = await gsGet('recipe_app:password');
+    if (res && res.value) currentAppPassword = res.value;
+  } catch (e) { /* ignore, نستخدم الافتراضية */ }
+  appPasswordLoaded = true;
+}
+
+async function unlockApp() {
+  await loadAppPassword();
+  const val = document.getElementById('passwordInput').value;
+  const err = document.getElementById('passwordError');
+  if (val === currentAppPassword) {
+    accountantUnlocked = true;
+    err.style.display = 'none';
+    document.getElementById('passwordInput').value = '';
+    switchAppTab(pendingAccountantTab || 'calc');
+  } else {
+    err.style.display = 'block';
+  }
+}
+
+async function changeAppPassword() {
+  const newPass = document.getElementById('newAppPasswordInput').value.trim();
+  const confirmPass = document.getElementById('confirmAppPasswordInput').value.trim();
+  const hint = document.getElementById('changeAppPasswordHint');
+  if (!newPass) { hint.textContent = 'اكتب كلمة السر الجديدة.'; hint.style.color = '#A32D2D'; return; }
+  if (newPass !== confirmPass) { hint.textContent = 'كلمة السر والتأكيد مش متطابقين.'; hint.style.color = '#A32D2D'; return; }
+  const old = currentAppPassword;
+  currentAppPassword = newPass;
+  try {
+    const ok = await gsSet('recipe_app:password', newPass);
+    if (ok) {
+      hint.textContent = 'تم تغيير كلمة السر بنجاح.'; hint.style.color = '#3B6D11';
+      document.getElementById('newAppPasswordInput').value = ''; document.getElementById('confirmAppPasswordInput').value = '';
+    } else {
+      currentAppPassword = old;
+      hint.textContent = 'حصل خطأ أثناء الحفظ، حاول تاني.'; hint.style.color = '#A32D2D';
+    }
+  } catch (e) {
+    currentAppPassword = old;
+    hint.textContent = 'حصل خطأ أثناء الحفظ، حاول تاني.'; hint.style.color = '#A32D2D';
+  }
+}
+
+function toggleSectionCollapse(id) {
+  const el = document.getElementById(id);
+  const arrow = document.getElementById(id + 'Arrow');
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  if (arrow) arrow.textContent = isHidden ? '▾' : '◂';
+}
+
+let accountantUnlocked = false;
+let pendingAccountantTab = null;
+const ACCOUNTANT_PROTECTED_TABS = ['calc', 'materials', 'settings'];
+
+function switchAppTab(tab) {
+  if (ACCOUNTANT_PROTECTED_TABS.includes(tab) && !accountantUnlocked) {
+    pendingAccountantTab = tab;
+    document.getElementById('calcView').style.display = 'none';
+    document.getElementById('materialsView').style.display = 'none';
+    document.getElementById('factoryInvView').style.display = 'none';
+    document.getElementById('settingsView').style.display = 'none';
+    document.getElementById('lockCard').style.display = 'block';
+    document.getElementById('tabCalcBtn').classList.toggle('active', tab === 'calc');
+    document.getElementById('tabMaterialsBtn').classList.toggle('active', tab === 'materials');
+    document.getElementById('tabFactoryInvBtn').classList.toggle('active', tab === 'factoryInv');
+    document.getElementById('tabSettingsBtn').classList.toggle('active', tab === 'settings');
+    return;
+  }
+  document.getElementById('lockCard').style.display = 'none';
+  document.getElementById('calcView').style.display = tab === 'calc' ? 'block' : 'none';
+  document.getElementById('materialsView').style.display = tab === 'materials' ? 'block' : 'none';
+  document.getElementById('factoryInvView').style.display = tab === 'factoryInv' ? 'block' : 'none';
+  document.getElementById('settingsView').style.display = tab === 'settings' ? 'block' : 'none';
+  document.getElementById('tabCalcBtn').classList.toggle('active', tab === 'calc');
+  document.getElementById('tabMaterialsBtn').classList.toggle('active', tab === 'materials');
+  document.getElementById('tabFactoryInvBtn').classList.toggle('active', tab === 'factoryInv');
+  document.getElementById('tabSettingsBtn').classList.toggle('active', tab === 'settings');
+  if (tab === 'materials') renderMaterialsList();
+  if (tab === 'factoryInv') {
+    populateFactoryUserSelect();
+    if (currentFactoryUser) { renderFactoryInvGroupChips(); }
+  }
+  if (tab === 'settings') { renderFactoryUsersList(); }
+}
+
+async function boot() {
+  await Promise.all([
+    loadMaterials().catch(e => console.error('loadMaterials error:', e)),
+    loadMaterialGroups().catch(e => console.error('loadMaterialGroups error:', e)),
+    loadRecipeCategories().catch(e => console.error('loadRecipeCategories error:', e)),
+    loadFactoryUsers().catch(e => console.error('loadFactoryUsers error:', e))
+  ]);
+  await loadRecipesIndex().catch(e => console.error('loadRecipesIndex error:', e));
+  populateIngredientsDatalist();
+  renderMaterialGroupChips();
+  renderMaterialGroupsList();
+  populateMaterialGroupSelect();
+  renderMaterialsList();
+  populateFactoryUserSelect();
+  newRecipe();
+  switchAppTab('factoryInv');
+}
+
+async function loadMaterialGroups() {
+  let res = null;
+  try { res = await gsGet('material_groups:list'); } catch (e) { return; }
+  if (res && res.value) {
+    try { materialGroups = JSON.parse(res.value); } catch (e) { console.error('material_groups:list بيانات تالفة:', e); }
+    return;
+  }
+  try { await gsSet('material_groups:list', JSON.stringify(materialGroups)); } catch (e) {}
+}
+
+async function saveMaterialGroups() {
+  try { const r = await gsSet('material_groups:list', JSON.stringify(materialGroups)); return !!r; }
+  catch (e) { return false; }
+}
+
+function renderMaterialGroupChips() {
+  const wrap = document.getElementById('materialGroupChipsWrap');
+  wrap.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.className = 'chip-btn' + (currentMaterialGroupFilter === 'الكل' ? ' active' : '');
+  allBtn.textContent = 'الكل';
+  allBtn.onclick = () => { currentMaterialGroupFilter = 'الكل'; renderMaterialGroupChips(); renderMaterialsList(); };
+  wrap.appendChild(allBtn);
+  materialGroups.forEach(g => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip-btn' + (g === currentMaterialGroupFilter ? ' active' : '');
+    btn.textContent = g;
+    btn.onclick = () => { currentMaterialGroupFilter = g; renderMaterialGroupChips(); renderMaterialsList(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function populateMaterialGroupSelect(selectedValue) {
+  ['newMaterialGroup', 'editMaterialGroupInput'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel) return;
+    sel.innerHTML = materialGroups.map(g => `<option value="${g}">${g}</option>`).join('');
+    if (selectedValue && materialGroups.includes(selectedValue)) sel.value = selectedValue;
+  });
+}
+
+function renderMaterialGroupsList() {
+  const wrap = document.getElementById('materialGroupsListWrap');
+  if (materialGroups.length === 0) { wrap.innerHTML = '<p class="empty">مفيش مجموعات.</p>'; return; }
+  let html = '<table><thead><tr><th>المجموعة</th><th></th></tr></thead><tbody>';
+  materialGroups.forEach(g => {
+    const safeG = g.replace(/'/g, "\\'");
+    if (editingMaterialGroupName === g) {
+      html += `<tr>
+        <td><input type="text" id="editMaterialGroupNameInput" value="${g.replace(/"/g, '&quot;')}" style="padding:6px 8px; font-size:13px;"></td>
+        <td style="white-space:nowrap;">
+          <button class="link-btn" onclick="saveEditMaterialGroup('${safeG}')">حفظ</button>
+          <button class="link-btn" style="color:#8A8A8A;" onclick="cancelEditMaterialGroup()">إلغاء</button>
+        </td></tr>`;
+    } else {
+      html += `<tr><td>${g}</td>
+        <td style="white-space:nowrap;">
+          <button class="link-btn" onclick="startEditMaterialGroup('${safeG}')">تعديل</button>
+          <button class="icon-btn" style="width:30px;height:30px;color:#A32D2D;border-color:#F5DADA;background:#FCEDED" onclick="deleteMaterialGroup('${safeG}')" aria-label="حذف">×</button>
+        </td></tr>`;
+    }
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+async function addMaterialGroup() {
+  const input = document.getElementById('newMaterialGroupInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (materialGroups.includes(name)) { alert('المجموعة دي موجودة بالفعل.'); return; }
+  materialGroups.push(name);
+  const ok = await saveMaterialGroups();
+  if (ok) {
+    input.value = '';
+    renderMaterialGroupChips(); renderMaterialGroupsList(); populateMaterialGroupSelect();
+  } else {
+    materialGroups.pop();
+    alert('حصل خطأ أثناء الحفظ، حاول تاني.');
+  }
+}
+
+function startEditMaterialGroup(name) { editingMaterialGroupName = name; renderMaterialGroupsList(); }
+function cancelEditMaterialGroup() { editingMaterialGroupName = null; renderMaterialGroupsList(); }
+
+async function saveEditMaterialGroup(oldName) {
+  const newName = document.getElementById('editMaterialGroupNameInput').value.trim();
+  if (!newName) return;
+  const idx = materialGroups.indexOf(oldName);
+  if (idx === -1) return;
+  const backup = [...materialGroups];
+  const catalogBackup = JSON.parse(JSON.stringify(materialsCatalog));
+  materialGroups[idx] = newName;
+  materialsCatalog.forEach(m => { if (m.group === oldName) m.group = newName; });
+
+  const ok1 = await saveMaterialGroups();
+  const ok2 = await saveMaterials();
+  if (ok1 && ok2) {
+    editingMaterialGroupName = null;
+    if (currentMaterialGroupFilter === oldName) currentMaterialGroupFilter = newName;
+    renderMaterialGroupChips(); renderMaterialGroupsList(); populateMaterialGroupSelect(); renderMaterialsList();
+  } else {
+    materialGroups = backup;
+    materialsCatalog = catalogBackup;
+    alert('حصل خطأ أثناء الحفظ، حاول تاني.');
+  }
+}
+
+async function deleteMaterialGroup(name) {
+  if (!confirm(`حذف مجموعة "${name}"؟ أي مادة عليها هتتحول لـ"أخرى".`)) return;
+  const backup = [...materialGroups];
+  const catalogBackup = JSON.parse(JSON.stringify(materialsCatalog));
+  materialGroups = materialGroups.filter(g => g !== name);
+  if (!materialGroups.includes('أخرى')) materialGroups.push('أخرى');
+  materialsCatalog.forEach(m => { if (m.group === name) m.group = 'أخرى'; });
+
+  const ok1 = await saveMaterialGroups();
+  const ok2 = await saveMaterials();
+  if (ok1 && ok2) {
+    if (currentMaterialGroupFilter === name) currentMaterialGroupFilter = 'الكل';
+    renderMaterialGroupChips(); renderMaterialGroupsList(); populateMaterialGroupSelect(); renderMaterialsList();
+  } else {
+    materialGroups = backup;
+    materialsCatalog = catalogBackup;
+    alert('حصل خطأ أثناء الحذف، حاول تاني.');
+  }
+}
+
+
+async function loadRecipeCategories() {
+  let res = null;
+  try { res = await gsGet('recipe_categories:list'); } catch (e) { return; }
+  if (res && res.value) {
+    try { recipeCategories = JSON.parse(res.value); } catch (e) { console.error('recipe_categories:list بيانات تالفة:', e); }
+    return;
+  }
+  try { await gsSet('recipe_categories:list', JSON.stringify(recipeCategories)); } catch (e) {}
+}
+
+async function saveRecipeCategories() {
+  try { const r = await gsSet('recipe_categories:list', JSON.stringify(recipeCategories)); return !!r; }
+  catch (e) { return false; }
+}
+
+function renderRecipeCategoryChips() {
+  const wrap = document.getElementById('recipeCategoryChipsWrap');
+  wrap.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.className = 'chip-btn' + (currentRecipeCategoryFilter === 'الكل' ? ' active' : '');
+  allBtn.textContent = 'الكل';
+  allBtn.onclick = () => { currentRecipeCategoryFilter = 'الكل'; renderRecipeCategoryChips(); populateRecipeSelectOptions(); };
+  wrap.appendChild(allBtn);
+  recipeCategories.forEach(cat => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip-btn' + (cat === currentRecipeCategoryFilter ? ' active' : '');
+    btn.textContent = cat;
+    btn.onclick = () => { currentRecipeCategoryFilter = cat; renderRecipeCategoryChips(); populateRecipeSelectOptions(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function populateRecipeCategorySelect() {
+  const sel = document.getElementById('recipeCategory');
+  const current = sel.value;
+  sel.innerHTML = recipeCategories.map(c => `<option value="${c}">${c}</option>`).join('');
+  if (recipeCategories.includes(current)) sel.value = current;
+}
+
+function renderRecipeCategoriesList() {
+  const wrap = document.getElementById('recipeCategoriesListWrap');
+  if (recipeCategories.length === 0) { wrap.innerHTML = '<p class="empty">مفيش تصنيفات.</p>'; return; }
+  let html = '<table><thead><tr><th>التصنيف</th><th></th></tr></thead><tbody>';
+  recipeCategories.forEach(cat => {
+    const safeCat = cat.replace(/'/g, "\\'");
+    if (editingRecipeCategoryName === cat) {
+      html += `<tr>
+        <td><input type="text" id="editRecipeCategoryInput" value="${cat.replace(/"/g, '&quot;')}" style="padding:6px 8px; font-size:13px;"></td>
+        <td style="white-space:nowrap;">
+          <button class="link-btn" onclick="saveEditRecipeCategory('${safeCat}')">حفظ</button>
+          <button class="link-btn" style="color:#8A8A8A;" onclick="cancelEditRecipeCategory()">إلغاء</button>
+        </td></tr>`;
+    } else {
+      html += `<tr><td>${cat}</td>
+        <td style="white-space:nowrap;">
+          <button class="link-btn" onclick="startEditRecipeCategory('${safeCat}')">تعديل</button>
+          <button class="icon-btn" style="width:30px;height:30px;color:#A32D2D;border-color:#F5DADA;background:#FCEDED" onclick="deleteRecipeCategory('${safeCat}')" aria-label="حذف">×</button>
+        </td></tr>`;
+    }
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+async function addRecipeCategory() {
+  const input = document.getElementById('newRecipeCategoryInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (recipeCategories.includes(name)) { alert('التصنيف ده موجود بالفعل.'); return; }
+  recipeCategories.push(name);
+  const ok = await saveRecipeCategories();
+  if (ok) {
+    input.value = '';
+    renderRecipeCategoryChips(); renderRecipeCategoriesList(); populateRecipeCategorySelect();
+  } else {
+    recipeCategories.pop();
+    alert('حصل خطأ أثناء الحفظ، حاول تاني.');
+  }
+}
+
+function startEditRecipeCategory(name) { editingRecipeCategoryName = name; renderRecipeCategoriesList(); }
+function cancelEditRecipeCategory() { editingRecipeCategoryName = null; renderRecipeCategoriesList(); }
+
+async function saveEditRecipeCategory(oldName) {
+  const newName = document.getElementById('editRecipeCategoryInput').value.trim();
+  if (!newName) return;
+  const idx = recipeCategories.indexOf(oldName);
+  if (idx === -1) return;
+  const backup = [...recipeCategories];
+  recipeCategories[idx] = newName;
+
+  // حدّث كل الريسيبيهات اللي كانت على التصنيف القديم
+  const affected = Object.values(recipesIndex).filter(r => r.category === oldName);
+  for (const r of affected) {
+    r.category = newName;
+    try { await gsSet(`recipe:${r.id}`, JSON.stringify(r)); } catch (e) {}
+  }
+
+  const ok = await saveRecipeCategories();
+  if (ok) {
+    editingRecipeCategoryName = null;
+    if (currentRecipeCategoryFilter === oldName) currentRecipeCategoryFilter = newName;
+    renderRecipeCategoryChips(); renderRecipeCategoriesList(); populateRecipeCategorySelect(); populateRecipeSelectOptions();
+  } else {
+    recipeCategories = backup;
+    alert('حصل خطأ أثناء الحفظ، حاول تاني.');
+  }
+}
+
+async function deleteRecipeCategory(name) {
+  if (!confirm(`حذف تصنيف "${name}"؟ أي ريسيبي عليه هيتحول لـ"أخرى".`)) return;
+  const backup = [...recipeCategories];
+  recipeCategories = recipeCategories.filter(c => c !== name);
+  if (!recipeCategories.includes('أخرى')) recipeCategories.push('أخرى');
+
+  const affected = Object.values(recipesIndex).filter(r => r.category === name);
+  for (const r of affected) {
+    r.category = 'أخرى';
+    try { await gsSet(`recipe:${r.id}`, JSON.stringify(r)); } catch (e) {}
+  }
+
+  const ok = await saveRecipeCategories();
+  if (ok) {
+    if (currentRecipeCategoryFilter === name) currentRecipeCategoryFilter = 'الكل';
+    renderRecipeCategoryChips(); renderRecipeCategoriesList(); populateRecipeCategorySelect(); populateRecipeSelectOptions();
+  } else {
+    recipeCategories = backup;
+    alert('حصل خطأ أثناء الحذف، حاول تاني.');
+  }
+}
+
+// نفس منطق تجميع البند لـ"أولية" أو "تعبئة" المستخدم في تطبيق الجرد، عشان نصنّف مواد الكتالوج المشتركة صح
+function classifyInventoryCategory(categoryName) {
+  const n = (categoryName || '').toLowerCase();
+  if (n.includes('تعبئة') || n.includes('تغليف') || n.includes('نظافة') || n.includes('استهلاك')) return 'packaging';
+  return 'raw';
+}
+
+async function loadMaterials() {
+  // 1) لو عندنا قائمة مستقلة محفوظة بالفعل (بعد الفصل عن الجرد)، نستخدمها مباشرة ومفيش أي اتصال بكتالوج الجرد تاني
+  let res = null;
+  try { res = await gsGet('materials:list_v2'); } catch (e) { console.error('تعذر تحميل قائمة المواد:', e); return; }
+  if (res && res.value) {
+    try { materialsCatalog = JSON.parse(res.value); return; }
+    catch (e) { console.error('materials:list_v2 بيانات تالفة، هنعيد بناءها:', e); }
+  }
+
+  // 2) أول مرة بعد الفصل: نجمع آخر نسخة من كتالوج الجرد + المواد الإضافية القديمة، ونحوّل أي صنف له وحدة بديلة (زي كيلو) لسعره بالوحدة البديلة
+  const [invRes, exRes, ovRes] = await Promise.all([
+    gsGet('inv_catalog:items').catch(() => null),
+    gsGet('materials:extra').catch(() => null),
+    gsGet('material_group_overrides:map').catch(() => null)
+  ]);
+  let inventoryItems = [];
+  if (invRes && invRes.value) inventoryItems = JSON.parse(invRes.value);
+  let extra = (exRes && exRes.value) ? JSON.parse(exRes.value) : [];
+  let overrides = (ovRes && ovRes.value) ? JSON.parse(ovRes.value) : {};
+
+  const converted = inventoryItems.map(it => {
+    let unit = it.unit;
+    let price = it.price || 0;
+    if (it.altUnit && it.altFactor) { unit = it.altUnit; price = price / it.altFactor; } // تحويل لسعر الوحدة البديلة (زي الكيلو) لو متاحة
+    return {
+      name: it.name,
+      unit,
+      price: Math.round(price * 10000) / 10000,
+      type: classifyInventoryCategory(it.category),
+      group: overrides[it.name] || it.category || 'أخرى'
+    };
+  });
+
+  materialsCatalog = [...converted, ...extra.map(m => ({ ...m }))];
+  if (materialsCatalog.length === 0) materialsCatalog = PRESET_MATERIALS.map(m => ({ ...m }));
+
+  try { await gsSet('materials:list_v2', JSON.stringify(materialsCatalog)); } catch (e) {}
+}
+
+async function saveMaterials() {
+  try {
+    const result = await gsSet('materials:list_v2', JSON.stringify(materialsCatalog));
+    return !!result;
+  } catch (e) { return false; }
+}
+
+async function syncFactoryMaterialPrices() {
+  const hint = document.getElementById('syncPricesHint');
+  const btn = document.getElementById('syncPricesBtn');
+  btn.disabled = true; btn.textContent = 'جاري التحديث...';
+
+  const backup = JSON.parse(JSON.stringify(materialsCatalog));
+  let updated = 0; let added = 0;
+  FACTORY_MARCH_2026_MATERIALS.forEach(fm => {
+    const existing = materialsCatalog.find(m => m.name === fm.name);
+    if (existing) {
+      if (existing.price !== fm.price) { existing.price = fm.price; updated++; }
+    } else {
+      materialsCatalog.push({ ...fm });
+      added++;
+    }
+  });
+
+  const ok = await saveMaterials();
+  if (ok) {
+    hint.textContent = `تم تحديث سعر ${updated} مادة موجودة، وإضافة ${added} مادة جديدة من قائمة المصنع (مارس 2026).`;
+    hint.style.color = '#3B6D11';
+    renderMaterialsList();
+    populateIngredientsDatalist();
+  } else {
+    materialsCatalog = backup;
+    hint.textContent = 'حصل خطأ أثناء الحفظ، حاول تاني.'; hint.style.color = '#A32D2D';
+  }
+  btn.disabled = false; btn.textContent = 'تحديث/إضافة من قائمة المصنع الجديدة';
+}
+
+function setMaterialFilter(f) {
+  materialFilter = f;
+  document.getElementById('matFilterAllBtn').classList.toggle('active', f === 'all');
+  document.getElementById('matFilterRawBtn').classList.toggle('active', f === 'raw');
+  document.getElementById('matFilterPackBtn').classList.toggle('active', f === 'packaging');
+  renderMaterialsList();
+}
+
+async function addMaterial() {
+  const nameInput = document.getElementById('newMaterialName');
+  const unitInput = document.getElementById('newMaterialUnit');
+  const priceInput = document.getElementById('newMaterialPrice');
+  const typeSelect = document.getElementById('newMaterialType');
+  const groupSelect = document.getElementById('newMaterialGroup');
+  const hint = document.getElementById('materialHint');
+  const name = nameInput.value.trim();
+  const unit = unitInput.value.trim() || '-';
+  const price = parseFloat(priceInput.value) || 0;
+  const type = typeSelect.value;
+  const group = groupSelect.value || 'أخرى';
+
+  if (!name) { hint.textContent = 'اكتب اسم المادة الأول.'; hint.style.color = '#A32D2D'; return; }
+  if (materialsCatalog.find(m => m.name === name)) { hint.textContent = 'المادة دي موجودة بالفعل.'; hint.style.color = '#A32D2D'; return; }
+
+  materialsCatalog.push({ name, unit, price, type, group });
+  const ok = await saveMaterials();
+  if (ok) {
+    hint.textContent = `تمت إضافة "${name}" بنجاح.`; hint.style.color = '#3B6D11';
+    nameInput.value = ''; unitInput.value = ''; priceInput.value = '';
+    populateIngredientsDatalist(); renderMaterialsList();
+  } else {
+    materialsCatalog.pop();
+    hint.textContent = 'حصل خطأ أثناء الحفظ، حاول تاني.'; hint.style.color = '#A32D2D';
+  }
+}
+
+async function deleteMaterial(name) {
+  const idx = materialsCatalog.findIndex(m => m.name === name);
+  if (idx === -1) return;
+  const removed = materialsCatalog.splice(idx, 1)[0];
+  const ok = await saveMaterials();
+  if (ok) { populateIngredientsDatalist(); renderMaterialsList(); }
+  else { materialsCatalog.splice(idx, 0, removed); }
+}
+
+function startEditMaterial(name) {
+  editingMaterialName = name;
+  renderMaterialsList();
+}
+
+function cancelEditMaterial() {
+  editingMaterialName = null;
+  renderMaterialsList();
+}
+
+async function saveEditMaterial(oldName) {
+  const newName = document.getElementById('editMaterialNameInput').value.trim();
+  const newUnit = document.getElementById('editMaterialUnitInput').value.trim() || '-';
+  const newPrice = parseFloat(document.getElementById('editMaterialPriceInput').value) || 0;
+  const newType = document.getElementById('editMaterialTypeInput').value;
+  const newGroup = document.getElementById('editMaterialGroupInput').value || 'أخرى';
+  if (!newName) return;
+  if (newName !== oldName && materialsCatalog.find(m => m.name === newName)) {
+    alert('في مادة تانية بنفس الاسم ده بالفعل.');
+    return;
+  }
+  const idx = materialsCatalog.findIndex(m => m.name === oldName);
+  if (idx === -1) return;
+  const backup = { ...materialsCatalog[idx] };
+  materialsCatalog[idx] = { name: newName, unit: newUnit, price: newPrice, type: newType, group: newGroup };
+  const ok = await saveMaterials();
+  if (ok) {
+    editingMaterialName = null;
+    populateIngredientsDatalist();
+    renderMaterialsList();
+  } else {
+    materialsCatalog[idx] = backup;
+    alert('حصل خطأ أثناء الحفظ، حاول تاني.');
+  }
+}
+
+let expandedMaterialGroups = new Set();
+
+function toggleMaterialGroupExpand(group) {
+  if (expandedMaterialGroups.has(group)) expandedMaterialGroups.delete(group);
+  else expandedMaterialGroups.add(group);
+  renderMaterialsList();
+}
+
+function renderMaterialRowHtml(m) {
+  const typeLabel = (m.type || 'raw') === 'packaging' ? 'تعبئة' : 'مادة خام';
+  const safeName = m.name.replace(/'/g, "\\'");
+  const isChecked = selectedMaterials.has(m.name);
+  if (editingMaterialName === m.name) {
+    return `<tr>
+      <td></td>
+      <td><input type="text" id="editMaterialNameInput" value="${m.name.replace(/"/g, '&quot;')}" style="padding:7px 9px; font-size:13.5px;"></td>
+      <td><input type="text" id="editMaterialUnitInput" value="${m.unit.replace(/"/g, '&quot;')}" style="padding:7px 9px; font-size:13.5px;"></td>
+      <td><input type="number" id="editMaterialPriceInput" value="${m.price || 0}" min="0" step="0.01" style="padding:7px 9px; font-size:13.5px;"></td>
+      <td><select id="editMaterialTypeInput" style="padding:7px 9px; font-size:13.5px;">
+        <option value="raw" ${(m.type||'raw')==='raw'?'selected':''}>مادة خام</option>
+        <option value="packaging" ${m.type==='packaging'?'selected':''}>تعبئة</option>
+      </select></td>
+      <td><select id="editMaterialGroupInput" style="padding:7px 9px; font-size:13.5px;">${materialGroups.map(g => `<option value="${g}" ${g===(m.group||'أخرى')?'selected':''}>${g}</option>`).join('')}</select></td>
+      <td style="white-space:nowrap;">
+        <button class="link-btn" onclick="saveEditMaterial('${safeName}')">حفظ</button>
+        <button class="link-btn" style="color:#8A8A8A;" onclick="cancelEditMaterial()">إلغاء</button>
+      </td></tr>`;
+  }
+  return `<tr>
+    <td><input type="checkbox" onchange="toggleMaterialSelection('${safeName}', this.checked)" ${isChecked ? 'checked' : ''}></td>
+    <td>${m.name}</td><td>${m.unit}</td><td class="num">${m.price || 0}</td><td>${typeLabel}</td><td>${m.group || 'أخرى'}</td>
+    <td style="white-space:nowrap;">
+      <button class="link-btn" onclick="startEditMaterial('${safeName}')">تعديل</button>
+      <button class="icon-btn" style="width:30px;height:30px;color:#A32D2D;border-color:#F5DADA;background:#FCEDED" onclick="deleteMaterial('${safeName}')" aria-label="حذف">×</button>
+    </td></tr>`;
+}
+
+function renderMaterialsList() {
+  const wrap = document.getElementById('materialsListWrap');
+  const search = (document.getElementById('materialSearchInput').value || '').trim().toLowerCase();
+  let displayed = materialFilter === 'all' ? materialsCatalog : materialsCatalog.filter(m => (m.type || 'raw') === materialFilter);
+  if (currentMaterialGroupFilter !== 'الكل') displayed = displayed.filter(m => (m.group || 'أخرى') === currentMaterialGroupFilter);
+  if (search) displayed = displayed.filter(m => m.name.toLowerCase().includes(search));
+  document.getElementById('materialCount').textContent = displayed.length;
+  if (displayed.length === 0) { wrap.innerHTML = '<p class="empty">مفيش مواد مطابقة.</p>'; return; }
+
+  let bulkBarHtml = '';
+  if (selectedMaterials.size > 0) {
+    const opts = materialGroups.map(g => `<option value="${g}">${g}</option>`).join('');
+    bulkBarHtml = `<div style="background:#FDECEC; border:1px solid #F5D0D0; border-radius:10px; padding:12px; margin-bottom:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+      <b style="font-size:13px;">${selectedMaterials.size} مادة محددة</b>
+      <select id="bulkMaterialGroupSelect" style="width:auto; padding:8px 10px;">${opts}</select>
+      <button class="ghost" onclick="applyBulkMaterialGroup()">نقل المحدد للمجموعة</button>
+      <select id="bulkMaterialTypeSelect" style="width:auto; padding:8px 10px;">
+        <option value="raw">مادة خام</option>
+        <option value="packaging">تعبئة</option>
+      </select>
+      <button class="ghost" onclick="applyBulkMaterialType()">تغيير النوع للمحدد</button>
+      <button class="link-btn" onclick="clearMaterialSelection()">إلغاء التحديد</button>
+    </div>`;
+  }
+
+  // نجمع الأصناف حسب المجموعة، وكل مجموعة تتعرض في قسم قابل للطي/الفرد لوحده
+  const byGroup = {};
+  const orderedGroups = [];
+  displayed.forEach(m => {
+    const g = m.group || 'أخرى';
+    if (!byGroup[g]) { byGroup[g] = []; orderedGroups.push(g); }
+    byGroup[g].push(m);
+  });
+  orderedGroups.sort((a, b) => {
+    const ia = materialGroups.indexOf(a); const ib = materialGroups.indexOf(b);
+    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+  });
+
+  let html = bulkBarHtml;
+  orderedGroups.forEach(g => {
+    const items = byGroup[g];
+    const isExpanded = expandedMaterialGroups.has(g);
+    const arrow = isExpanded ? '▾' : '◂';
+    const safeG = g.replace(/'/g, "\\'");
+    html += `<div style="border:1px solid #E0E0E0; border-radius:10px; margin-bottom:10px; overflow:hidden;">
+      <div style="background:#FDECEC; padding:12px 14px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;" onclick="toggleMaterialGroupExpand('${safeG}')">
+        <b style="font-size:14px;">${g}</b>
+        <span class="muted" style="font-size:12.5px;">${items.length} صنف <span style="color:#B71C1C;">${arrow}</span></span>
+      </div>`;
+    if (isExpanded) {
+      html += `<table><thead><tr>
+        <th><input type="checkbox" onchange="toggleSelectAllMaterials(this.checked)"></th>
+        <th>المادة</th><th>الوحدة</th><th>السعر</th><th>النوع</th><th>المجموعة</th><th></th></tr></thead><tbody>`;
+      items.forEach(m => { html += renderMaterialRowHtml(m); });
+      html += '</tbody></table>';
+    }
+    html += '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+function toggleMaterialSelection(name, checked) {
+  if (checked) selectedMaterials.add(name); else selectedMaterials.delete(name);
+  renderMaterialsList();
+}
+
+function toggleSelectAllMaterials(checked) {
+  const search = (document.getElementById('materialSearchInput').value || '').trim().toLowerCase();
+  let displayed = materialFilter === 'all' ? materialsCatalog : materialsCatalog.filter(m => (m.type || 'raw') === materialFilter);
+  if (currentMaterialGroupFilter !== 'الكل') displayed = displayed.filter(m => (m.group || 'أخرى') === currentMaterialGroupFilter);
+  if (search) displayed = displayed.filter(m => m.name.toLowerCase().includes(search));
+  if (checked) displayed.forEach(m => selectedMaterials.add(m.name));
+  else displayed.forEach(m => selectedMaterials.delete(m.name));
+  renderMaterialsList();
+}
+
+function clearMaterialSelection() {
+  selectedMaterials.clear();
+  renderMaterialsList();
+}
+
+async function applyBulkMaterialGroup() {
+  const newGroup = document.getElementById('bulkMaterialGroupSelect').value;
+  if (!newGroup || selectedMaterials.size === 0) return;
+
+  const backup = JSON.parse(JSON.stringify(materialsCatalog));
+  selectedMaterials.forEach(name => {
+    const mat = materialsCatalog.find(m => m.name === name);
+    if (mat) mat.group = newGroup;
+  });
+
+  const ok = await saveMaterials();
+  if (ok) { clearMaterialSelection(); }
+  else {
+    materialsCatalog = backup;
+    alert('حصل خطأ أثناء الحفظ، حاول تاني.');
+    renderMaterialsList();
+  }
+}
+
+async function applyBulkMaterialType() {
+  const newType = document.getElementById('bulkMaterialTypeSelect').value;
+  if (!newType || selectedMaterials.size === 0) return;
+
+  const backup = JSON.parse(JSON.stringify(materialsCatalog));
+  selectedMaterials.forEach(name => {
+    const mat = materialsCatalog.find(m => m.name === name);
+    if (mat) mat.type = newType;
+  });
+
+  const ok = await saveMaterials();
+  if (ok) { clearMaterialSelection(); }
+  else {
+    materialsCatalog = backup;
+    alert('حصل خطأ أثناء الحفظ، حاول تاني.');
+    renderMaterialsList();
+  }
+}
+
+// ===== مستخدمين الجرد =====
+let factoryUsers = [];
+let currentFactoryUser = null;
+
+async function loadFactoryUsers() {
+  let res = null;
+  try { res = await gsGet('factory_users:list'); } catch (e) { return; }
+  try { factoryUsers = (res && res.value) ? JSON.parse(res.value) : []; }
+  catch (e) { console.error('factory_users:list بيانات تالفة، اتجوهت:', e); factoryUsers = []; }
+}
+
+async function saveFactoryUsers() {
+  try { const r = await gsSet('factory_users:list', JSON.stringify(factoryUsers)); return !!r; }
+  catch (e) { return false; }
+}
+
+function populateFactoryUserSelect() {
+  const sel = document.getElementById('factoryInvUsername');
+  if (!sel) return;
+  sel.innerHTML = factoryUsers.map(u => `<option value="${u.username}">${u.username}</option>`).join('') || '<option value="">لا يوجد مستخدمين، ضيف واحد من Accountant</option>';
+}
+
+async function addFactoryUser() {
+  const nameInput = document.getElementById('newFactoryUserName');
+  const passInput = document.getElementById('newFactoryUserPassword');
+  const hint = document.getElementById('factoryUserHint');
+  const username = nameInput.value.trim();
+  const password = passInput.value.trim();
+  if (!username || !password) { hint.textContent = 'اكتب اسم المستخدم وكلمة السر.'; hint.style.color = '#A32D2D'; return; }
+  if (factoryUsers.find(u => u.username === username)) { hint.textContent = 'المستخدم ده موجود بالفعل.'; hint.style.color = '#A32D2D'; return; }
+  factoryUsers.push({ username, password });
+  const ok = await saveFactoryUsers();
+  if (ok) {
+    hint.textContent = `تمت إضافة "${username}" بنجاح.`; hint.style.color = '#3B6D11';
+    nameInput.value = ''; passInput.value = '';
+    renderFactoryUsersList(); populateFactoryUserSelect();
+  } else {
+    factoryUsers.pop();
+    hint.textContent = 'حصل خطأ أثناء الحفظ، حاول تاني.'; hint.style.color = '#A32D2D';
+  }
+}
+
+async function deleteFactoryUser(username) {
+  if (!confirm(`حذف المستخدم "${username}"؟`)) return;
+  const idx = factoryUsers.findIndex(u => u.username === username);
+  if (idx === -1) return;
+  const removed = factoryUsers.splice(idx, 1)[0];
+  const ok = await saveFactoryUsers();
+  if (ok) { renderFactoryUsersList(); populateFactoryUserSelect(); }
+  else { factoryUsers.splice(idx, 0, removed); alert('حصل خطأ أثناء الحذف، حاول تاني.'); }
+}
+
+let editingFactoryUserPassword = null;
+
+function renderFactoryUsersList() {
+  const wrap = document.getElementById('factoryUsersListWrap');
+  if (factoryUsers.length === 0) { wrap.innerHTML = '<p class="empty">مفيش مستخدمين لسه.</p>'; return; }
+  let html = '<table><thead><tr><th>اسم المستخدم</th><th>كلمة السر</th><th></th></tr></thead><tbody>';
+  factoryUsers.forEach(u => {
+    const safeName = u.username.replace(/'/g, "\\'");
+    if (editingFactoryUserPassword === u.username) {
+      html += `<tr><td>${u.username}</td>
+        <td><input type="text" id="editFactoryUserPasswordInput" value="${u.password.replace(/"/g, '&quot;')}" style="padding:6px 8px; font-size:13px;"></td>
+        <td style="white-space:nowrap;">
+          <button class="link-btn" onclick="saveFactoryUserPassword('${safeName}')">حفظ</button>
+          <button class="link-btn" style="color:#8A7F6A;" onclick="cancelEditFactoryUserPassword()">إلغاء</button>
+        </td></tr>`;
+    } else {
+      html += `<tr><td>${u.username}</td><td>••••••</td>
+        <td style="white-space:nowrap;">
+          <button class="link-btn" onclick="startEditFactoryUserPassword('${safeName}')">تغيير كلمة السر</button>
+          <button class="icon-btn" style="width:30px;height:30px;color:#A32D2D;border-color:#F5DADA;background:#FCEDED" onclick="deleteFactoryUser('${safeName}')" aria-label="حذف">×</button>
+        </td></tr>`;
+    }
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+function startEditFactoryUserPassword(username) { editingFactoryUserPassword = username; renderFactoryUsersList(); }
+function cancelEditFactoryUserPassword() { editingFactoryUserPassword = null; renderFactoryUsersList(); }
+
+async function saveFactoryUserPassword(username) {
+  const newPassInput = document.getElementById('editFactoryUserPasswordInput');
+  const newPassword = newPassInput.value.trim();
+  if (!newPassword) return;
+  const user = factoryUsers.find(u => u.username === username);
+  if (!user) return;
+  const backup = user.password;
+  user.password = newPassword;
+  const ok = await saveFactoryUsers();
+  if (ok) { editingFactoryUserPassword = null; renderFactoryUsersList(); }
+  else { user.password = backup; alert('حصل خطأ أثناء الحفظ، حاول تاني.'); }
+}
+
+async function loginFactoryInvUser() {
+  const username = document.getElementById('factoryInvUsername').value;
+  const password = document.getElementById('factoryInvUserPassword').value;
+  const err = document.getElementById('factoryInvLoginError');
+  const user = factoryUsers.find(u => u.username === username && u.password === password);
+  if (!user) { err.style.display = 'block'; return; }
+  err.style.display = 'none';
+  currentFactoryUser = user;
+  document.getElementById('factoryInvLoginCard').style.display = 'none';
+  document.getElementById('factoryInvContent').style.display = 'block';
+  document.getElementById('factoryInvLoggedInAs').textContent = user.username;
+  document.getElementById('factoryInvUserPassword').value = '';
+  if (!document.getElementById('factoryInvDate').value) { document.getElementById('factoryInvDate').value = todayStr(); }
+  renderFactoryInvGroupChips();
+  loadFactoryInventory();
+}
+
+function logoutFactoryInvUser() {
+  currentFactoryUser = null;
+  document.getElementById('factoryInvContent').style.display = 'none';
+  document.getElementById('factoryInvLoginCard').style.display = 'block';
+}
+
+async function quickAddFactoryItem() {
+  const nameInput = document.getElementById('quickAddItemName');
+  const unitInput = document.getElementById('quickAddItemUnit');
+  const priceInput = document.getElementById('quickAddItemPrice');
+  const hint = document.getElementById('quickAddHint');
+  const name = nameInput.value.trim();
+  const unit = unitInput.value.trim() || '-';
+  const price = parseFloat(priceInput.value) || 0;
+
+  if (!name) { hint.textContent = 'اكتب اسم الصنف الأول.'; hint.style.color = '#A32D2D'; return; }
+  if (materialsCatalog.find(m => m.name === name)) { hint.textContent = 'الصنف ده موجود بالفعل، دوّر عليه في القائمة تحت.'; hint.style.color = '#A32D2D'; return; }
+
+  materialsCatalog.push({ name, unit, price, type: 'raw', group: 'أخرى' });
+  const ok = await saveMaterials();
+  if (ok) {
+    hint.textContent = `تمت إضافة "${name}" — تقدر تكتب كميته في القائمة تحت دلوقتي.`; hint.style.color = '#3B6D11';
+    nameInput.value = ''; unitInput.value = ''; priceInput.value = '';
+    renderFactoryInvGroupChips();
+    renderFactoryInventoryList();
+  } else {
+    materialsCatalog.pop();
+    hint.textContent = 'حصل خطأ أثناء الحفظ، حاول تاني.'; hint.style.color = '#A32D2D';
+  }
+}
+
+async function loadFactoryInventoryReview() {
+  const date = document.getElementById('reviewFactoryInvDate').value;
+  const wrap = document.getElementById('factoryInvReviewWrap');
+  if (!date) { wrap.innerHTML = '<p class="empty">اختار التاريخ الأول.</p>'; return; }
+  wrap.innerHTML = '<p class="empty">جاري التحميل...</p>';
+
+  let data = {};
+  try {
+    const res = await gsGet(`factory_inventory:${date}`);
+    if (res && res.value) data = JSON.parse(res.value);
+  } catch (e) {
+    wrap.innerHTML = '<p class="empty">تعذر التحميل.</p>';
+    return;
+  }
+
+  const names = Object.keys(data);
+  if (names.length === 0) { wrap.innerHTML = '<p class="empty">مفيش جرد مسجل لهذا اليوم.</p>'; return; }
+
+  let total = 0;
+  let html = '<table><thead><tr><th>المادة</th><th>الوحدة</th><th>الكمية</th><th>السعر</th><th>القيمة</th></tr></thead><tbody>';
+  names.forEach(name => {
+    const mat = materialsCatalog.find(m => m.name === name);
+    const qty = data[name];
+    const price = mat ? (mat.price || 0) : 0;
+    const value = Math.round(qty * price * 100) / 100;
+    total += value;
+    html += `<tr><td>${name}</td><td>${mat ? mat.unit : '-'}</td><td class="num">${qty}</td><td class="num">${price}</td><td class="num">${value}</td></tr>`;
+  });
+  html += `<tr style="font-weight:700; background:#FDECEC;"><td colspan="4">الإجمالي</td><td class="num">${Math.round(total*100)/100}</td></tr>`;
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+}
+
+// ===== جرد المصنع =====
+async function loadFactoryInventory() {
+  const date = document.getElementById('factoryInvDate').value;
+  if (!date) return;
+  currentFactoryInvData = {};
+  try {
+    const res = await gsGet(`factory_inventory:${date}`);
+    if (res && res.value) currentFactoryInvData = JSON.parse(res.value);
+  } catch (e) { /* لا يوجد جرد لهذا اليوم بعد */ }
+  renderFactoryInvGroupChips();
+  renderFactoryInventoryList();
+}
+
+function renderFactoryInvGroupChips() {
+  const wrap = document.getElementById('factoryInvGroupChipsWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.className = 'chip-btn' + (currentFactoryInvGroupFilter === 'الكل' ? ' active' : '');
+  allBtn.textContent = 'الكل';
+  allBtn.onclick = () => { currentFactoryInvGroupFilter = 'الكل'; renderFactoryInvGroupChips(); renderFactoryInventoryList(); };
+  wrap.appendChild(allBtn);
+  materialGroups.forEach(g => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'chip-btn' + (g === currentFactoryInvGroupFilter ? ' active' : '');
+    btn.textContent = g;
+    btn.onclick = () => { currentFactoryInvGroupFilter = g; renderFactoryInvGroupChips(); renderFactoryInventoryList(); };
+    wrap.appendChild(btn);
+  });
+}
+
+function renderFactoryInventoryList() {
+  const wrap = document.getElementById('factoryInventoryListWrap');
+  const search = (document.getElementById('factoryInvSearchInput').value || '').trim().toLowerCase();
+  let filtered = materialsCatalog;
+  if (currentFactoryInvGroupFilter !== 'الكل') filtered = filtered.filter(m => (m.group || 'أخرى') === currentFactoryInvGroupFilter);
+  if (search) filtered = filtered.filter(m => m.name.toLowerCase().includes(search));
+
+  if (filtered.length === 0) { wrap.innerHTML = '<p class="empty">مفيش مواد مطابقة.</p>'; return; }
+
+  let html = '<table><thead><tr><th>المادة</th><th>الوحدة</th><th>السعر</th><th style="width:110px;">الكمية المتوفرة</th></tr></thead><tbody>';
+  filtered.forEach(m => {
+    const qtyVal = currentFactoryInvData[m.name] !== undefined ? currentFactoryInvData[m.name] : '';
+    const safeName = m.name.replace(/'/g, "\\'");
+    html += `<tr>
+      <td>${m.name}</td><td>${m.unit}</td><td class="num">${m.price || 0}</td>
+      <td><input type="number" min="0" step="0.01" value="${qtyVal}" placeholder="0"
+        oninput="updateFactoryInvQty('${safeName}', this.value)" style="padding:7px 8px; font-size:13.5px;"></td>
+    </tr>`;
+  });
+  html += '</tbody></table>';
+  wrap.innerHTML = html;
+  updateFactoryInvMetrics();
+}
+
+function updateFactoryInvQty(name, valueStr) {
+  const qty = parseFloat(valueStr);
+  if (!valueStr || isNaN(qty) || qty <= 0) delete currentFactoryInvData[name];
+  else currentFactoryInvData[name] = qty;
+  updateFactoryInvMetrics();
+}
+
+function updateFactoryInvMetrics() {
+  let total = 0; let count = 0;
+  Object.keys(currentFactoryInvData).forEach(name => {
+    const mat = materialsCatalog.find(m => m.name === name);
+    if (mat) { total += currentFactoryInvData[name] * (mat.price || 0); count++; }
+  });
+  document.getElementById('mFactoryInvTotal').textContent = Math.round(total * 100) / 100;
+  document.getElementById('mFactoryInvCount').textContent = count;
+}
+
+async function saveFactoryInventory() {
+  const date = document.getElementById('factoryInvDate').value;
+  const toast = document.getElementById('factoryInvToast');
+  const btn = document.getElementById('saveFactoryInvBtn');
+  if (!date) { toast.innerHTML = '<div class="toast err">اختار التاريخ الأول.</div>'; return; }
+
+  btn.disabled = true; btn.textContent = 'جاري الحفظ...';
+  try {
+    const ok = await gsSet(`factory_inventory:${date}`, JSON.stringify(currentFactoryInvData));
+    if (ok) {
+      toast.innerHTML = `<div class="toast ok">تم حفظ جرد المصنع ليوم ${date} بنجاح.</div>`;
+    } else {
+      toast.innerHTML = '<div class="toast err">حصل خطأ أثناء الحفظ، حاول تاني.</div>';
+    }
+  } catch (e) {
+    toast.innerHTML = `<div class="toast err">${e && e.message ? e.message : 'حصل خطأ أثناء الحفظ.'}</div>`;
+  }
+  btn.disabled = false; btn.textContent = 'حفظ جرد المصنع';
+}
+
+function populateIngredientsDatalist() {
+  const dl = document.getElementById('ingredientsList');
+  dl.innerHTML = '';
+  materialsCatalog.filter(m => (m.type || 'raw') === 'raw').forEach(it => {
+    const opt = document.createElement('option');
+    opt.value = it.name;
+    dl.appendChild(opt);
+  });
+  const pdl = document.getElementById('packagingList');
+  pdl.innerHTML = '';
+  materialsCatalog.filter(m => m.type === 'packaging').forEach(it => {
+    const opt = document.createElement('option');
+    opt.value = it.name;
+    pdl.appendChild(opt);
+  });
+
+  document.getElementById('ingredientInput').addEventListener('input', () => {
+    const match = materialsCatalog.find(it => it.name === document.getElementById('ingredientInput').value);
+    if (match) {
+      document.getElementById('ingredientUnit').value = match.unit || '';
+      document.getElementById('ingredientPriceInput').value = match.price || '';
+    }
+  });
+  document.getElementById('packagingInput').addEventListener('input', () => {
+    const match = materialsCatalog.find(it => it.name === document.getElementById('packagingInput').value);
+    if (match) {
+      document.getElementById('packagingUnit').value = match.unit || '';
+      document.getElementById('packagingPriceInput').value = match.price || '';
+    }
+  });
+}
+
+async function loadRecipesIndex() {
+  recipesIndex = {};
+  try {
+    const listResult = await gsList('recipe:');
+    const keys = listResult.keys || [];
+    const results = await Promise.all(keys.map(k => gsGet(k).catch(() => null)));
+    results.forEach(res => {
+      if (!res || !res.value) return;
+      try {
+        const recipe = JSON.parse(res.value);
+        if (!recipe.tier) recipe.tier = 'factory'; // توافق مع ريسيبيهات قديمة قبل إضافة المستويات
+        if (!recipe.category) recipe.category = 'أخرى'; // توافق مع ريسيبيهات قديمة قبل إضافة التصنيفات
+        recipesIndex[recipe.id] = recipe;
+      } catch (e) { /* skip */ }
+    });
+  } catch (e) { /* ignore */ }
+  renderRecipeCategoryChips();
+  renderRecipeCategoriesList();
+  populateRecipeCategorySelect();
+  populateRecipeSelectOptions();
+  populateIngredientRecipeSelect();
+}
+
+function populateRecipeSelectOptions() {
+  const select = document.getElementById('recipeSelect');
+  select.innerHTML = '<option value="">-- اختار ريسيبي محفوظ --</option>';
+  const factoryGroup = document.createElement('optgroup'); factoryGroup.label = 'ريسيبي مصنع';
+  const storeGroup = document.createElement('optgroup'); storeGroup.label = 'ريسيبي فرع';
+  Object.values(recipesIndex)
+    .filter(r => currentRecipeCategoryFilter === 'الكل' || r.category === currentRecipeCategoryFilter)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ar'))
+    .forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id; opt.textContent = `${r.name} (${r.category})`;
+      (r.tier === 'store' ? storeGroup : factoryGroup).appendChild(opt);
+    });
+  if (factoryGroup.children.length) select.appendChild(factoryGroup);
+  if (storeGroup.children.length) select.appendChild(storeGroup);
+}
+
+// قائمة الريسيبيهات اللي ممكن تُستخدم كمكوّن جوه ريسيبي تاني (ريسيبيهات المصنع فقط، ومينفعش الريسيبي يستخدم نفسه)
+function populateIngredientRecipeSelect() {
+  const sel = document.getElementById('ingredientRecipeSelect');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">-- اختار ريسيبي --</option>';
+  Object.values(recipesIndex)
+    .filter(r => r.tier !== 'store' && r.id !== currentRecipeId)
+    .sort((a, b) => a.name.localeCompare(b.name, 'ar'))
+    .forEach(r => {
+      const opt = document.createElement('option');
+      opt.value = r.id; opt.textContent = `${r.name} (${Math.round(getRecipeUnitCost(r.id) * 100) / 100}/${r.yieldUnit || '-'})`;
+      sel.appendChild(opt);
+    });
+}
+
+function newRecipe() {
+  currentRecipeId = null;
+  document.getElementById('recipeSelect').value = '';
+  document.getElementById('recipeName').value = '';
+  document.getElementById('recipeTier').value = 'factory';
+  document.getElementById('recipeCategory').value = recipeCategories[0] || 'أخرى';
+  document.getElementById('yieldQty').value = '';
+  document.getElementById('yieldUnit').value = '';
+  currentIngredients = [];
+  currentPackaging = [];
+  document.getElementById('deleteRecipeBtn').style.display = 'none';
+  document.getElementById('scaleResultCard').style.display = 'none';
+  document.getElementById('scaleQty').value = '';
+  renderIngredients();
+  renderPackaging();
+  populateIngredientRecipeSelect();
+}
+
+function loadSelectedRecipe() {
+  const id = document.getElementById('recipeSelect').value;
+  if (!id) { newRecipe(); return; }
+  const recipe = recipesIndex[id];
+  if (!recipe) return;
+  currentRecipeId = recipe.id;
+  document.getElementById('recipeName').value = recipe.name;
+  document.getElementById('recipeTier').value = recipe.tier || 'factory';
+  document.getElementById('recipeCategory').value = recipe.category || 'أخرى';
+  document.getElementById('yieldQty').value = recipe.yieldQty;
+  document.getElementById('yieldUnit').value = recipe.yieldUnit;
+  currentIngredients = (recipe.ingredients || []).map(i => ({ ...i }));
+  currentPackaging = (recipe.packaging || []).map(i => ({ ...i }));
+  document.getElementById('deleteRecipeBtn').style.display = 'inline-block';
+  document.getElementById('scaleResultCard').style.display = 'none';
+  document.getElementById('scaleQty').value = '';
+  renderIngredients();
+  renderPackaging();
+  populateIngredientRecipeSelect();
+}
+
+function addRecipeIngredientRow() {
+  const sel = document.getElementById('ingredientRecipeSelect');
+  const qtyInput = document.getElementById('ingredientRecipeQty');
+  const hint = document.getElementById('ingredientHint');
+  const sourceRecipeId = sel.value;
+  const qty = parseFloat(qtyInput.value);
+
+  if (!sourceRecipeId) { hint.textContent = 'اختار ريسيبي مصدر الأول.'; hint.style.color = '#A32D2D'; return; }
+  if (!qty || qty <= 0) { hint.textContent = 'أدخل كمية أكبر من صفر.'; hint.style.color = '#A32D2D'; return; }
+
+  const sourceRecipe = recipesIndex[sourceRecipeId];
+  const name = sourceRecipe ? sourceRecipe.name : sourceRecipeId;
+  const unit = sourceRecipe ? (sourceRecipe.yieldUnit || '-') : '-';
+
+  const existing = currentIngredients.find(r => r.sourceRecipeId === sourceRecipeId);
+  if (existing) { existing.qty = qty; }
+  else { currentIngredients.push({ name, unit, qty, sourceRecipeId }); }
+
+  qtyInput.value = '';
+  hint.textContent = 'اكتب اسم المكون والوحدة والكمية وسعر الوحدة، واضغط +';
+  hint.style.color = '#8A8A8A';
+  renderIngredients();
+}
+
+function addIngredientRow() {
+  const nameInput = document.getElementById('ingredientInput');
+  const unitInput = document.getElementById('ingredientUnit');
+  const qtyInput = document.getElementById('ingredientQty');
+  const priceInput = document.getElementById('ingredientPriceInput');
+  const name = nameInput.value.trim();
+  const unit = unitInput.value.trim() || '-';
+  const qty = parseFloat(qtyInput.value);
+  const price = parseFloat(priceInput.value) || 0;
+  const hint = document.getElementById('ingredientHint');
+
+  if (!name) { hint.textContent = 'اكتب اسم المكون.'; hint.style.color = '#A32D2D'; return; }
+  if (!qty || qty <= 0) { hint.textContent = 'أدخل كمية أكبر من صفر.'; hint.style.color = '#A32D2D'; return; }
+
+  const existing = currentIngredients.find(r => r.name === name);
+  if (existing) { existing.qty = qty; existing.unit = unit; existing.price = price; }
+  else { currentIngredients.push({ name, unit, qty, price }); }
+
+  hint.textContent = 'اكتب اسم المكون والوحدة والكمية وسعر الوحدة، واضغط +';
+  hint.style.color = '#8A8A8A';
+  nameInput.value = ''; unitInput.value = ''; qtyInput.value = ''; priceInput.value = '';
+  renderIngredients();
+}
+
+function removeIngredientRow(name) {
+  currentIngredients = currentIngredients.filter(r => r.name !== name);
+  renderIngredients();
+}
+
+function addPackagingRow() {
+  const nameInput = document.getElementById('packagingInput');
+  const unitInput = document.getElementById('packagingUnit');
+  const qtyInput = document.getElementById('packagingQty');
+  const priceInput = document.getElementById('packagingPriceInput');
+  const name = nameInput.value.trim();
+  const unit = unitInput.value.trim() || '-';
+  const qty = parseFloat(qtyInput.value);
+  const price = parseFloat(priceInput.value) || 0;
+  const hint = document.getElementById('packagingHint');
+
+  if (!name) { hint.textContent = 'اكتب اسم عنصر التعبئة.'; hint.style.color = '#A32D2D'; return; }
+  if (!qty || qty <= 0) { hint.textContent = 'أدخل كمية أكبر من صفر.'; hint.style.color = '#A32D2D'; return; }
+
+  const existing = currentPackaging.find(r => r.name === name);
+  if (existing) { existing.qty = qty; existing.unit = unit; existing.price = price; }
+  else { currentPackaging.push({ name, unit, qty, price }); }
+
+  hint.textContent = '';
+  nameInput.value = ''; unitInput.value = ''; qtyInput.value = ''; priceInput.value = '';
+  renderPackaging();
+}
+
+function removePackagingRow(name) {
+  currentPackaging = currentPackaging.filter(r => r.name !== name);
+  renderPackaging();
+}
+
+function renderIngredients() {
+  const wrap = document.getElementById('ingredientsTableWrap');
+
+  if (currentIngredients.length === 0) {
+    wrap.innerHTML = '<p class="empty">لسه مفيش مكونات مضافة</p>';
+  } else {
+    let html = '<table><thead><tr><th>المكون</th><th>الوحدة</th><th>الكمية</th><th>سعر الوحدة</th><th>التكلفة</th><th></th></tr></thead><tbody>';
+    let totalQty = 0; let totalCost = 0;
+    currentIngredients.forEach(r => {
+      const price = r.sourceRecipeId ? getRecipeUnitCost(r.sourceRecipeId) : (r.price || 0);
+      const lineCost = Math.round(r.qty * price * 100) / 100;
+      totalQty += r.qty; totalCost += lineCost;
+      const linkedBadge = r.sourceRecipeId ? ' <span class="muted" style="font-size:11px;">(مربوط)</span>' : '';
+      html += `<tr><td>${r.name}${linkedBadge}</td><td>${r.unit}</td><td class="num">${r.qty}</td><td class="num">${Math.round(price*100)/100}</td><td class="num">${lineCost}</td>
+        <td><button class="icon-btn" style="width:30px;height:30px;color:#A32D2D;border-color:#F5DADA;background:#FCEDED" onclick="removeIngredientRow('${r.name.replace(/'/g, "\\'")}')" aria-label="حذف">×</button></td></tr>`;
+    });
+    html += `<tr style="font-weight:700; background:#FDECEC;">
+      <td>الإجمالي</td><td></td>
+      <td class="num"><input type="number" min="0" step="0.001" value="${Math.round(totalQty*1000)/1000}" style="width:80px; padding:6px 8px; font-size:13px; text-align:center;" onchange="updateIngredientsTotalQty(this.value)"></td>
+      <td></td><td class="num">${Math.round(totalCost*100)/100}</td><td></td></tr>`;
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+  updateTotals();
+}
+
+function updateIngredientsTotalQty(newTotalStr) {
+  const newTotal = parseFloat(newTotalStr);
+  if (isNaN(newTotal) || newTotal <= 0 || currentIngredients.length === 0) { renderIngredients(); return; }
+  const currentTotal = currentIngredients.reduce((s, r) => s + r.qty, 0);
+  if (currentTotal <= 0) { renderIngredients(); return; }
+  const scale = newTotal / currentTotal;
+  currentIngredients.forEach(r => { r.qty = Math.round(r.qty * scale * 1000) / 1000; });
+  renderIngredients();
+}
+
+function renderPackaging() {
+  const wrap = document.getElementById('packagingTableWrap');
+
+  if (currentPackaging.length === 0) {
+    wrap.innerHTML = '<p class="empty">لسه مفيش عناصر تعبئة مضافة</p>';
+  } else {
+    let html = '<table><thead><tr><th>العنصر</th><th>الوحدة</th><th>الكمية</th><th>سعر الوحدة</th><th>التكلفة</th><th></th></tr></thead><tbody>';
+    currentPackaging.forEach(r => {
+      const lineCost = Math.round(r.qty * (r.price || 0) * 100) / 100;
+      html += `<tr><td>${r.name}</td><td>${r.unit}</td><td class="num">${r.qty}</td><td class="num">${r.price || 0}</td><td class="num">${lineCost}</td>
+        <td><button class="icon-btn" style="width:30px;height:30px;color:#A32D2D;border-color:#F5DADA;background:#FCEDED" onclick="removePackagingRow('${r.name.replace(/'/g, "\\'")}')" aria-label="حذف">×</button></td></tr>`;
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+  }
+  updateTotals();
+}
+
+function updateTotals() {
+  const rawCost = Math.round(currentIngredients.reduce((s, r) => {
+    const price = r.sourceRecipeId ? getRecipeUnitCost(r.sourceRecipeId) : (r.price || 0);
+    return s + r.qty * price;
+  }, 0) * 100) / 100;
+  const packagingCost = Math.round(currentPackaging.reduce((s, r) => s + r.qty * (r.price || 0), 0) * 100) / 100;
+  const totalCost = Math.round((rawCost + packagingCost) * 100) / 100;
+  const yieldQty = parseFloat(document.getElementById('yieldQty').value) || 0;
+  const unitCost = yieldQty > 0 ? Math.round((totalCost / yieldQty) * 100) / 100 : 0;
+  document.getElementById('mRawCost').textContent = rawCost;
+  document.getElementById('mPackagingCost').textContent = packagingCost;
+  document.getElementById('mTotalCost').textContent = totalCost;
+  document.getElementById('mUnitCost').textContent = unitCost;
+  document.getElementById('scaleUnitLabel').textContent = document.getElementById('yieldUnit').value || '-';
+}
+
+document.addEventListener('input', (e) => {
+  if (e.target && (e.target.id === 'yieldQty' || e.target.id === 'yieldUnit')) updateTotals();
+});
+
+async function saveRecipe() {
+  const name = document.getElementById('recipeName').value.trim();
+  const tier = document.getElementById('recipeTier').value;
+  const category = document.getElementById('recipeCategory').value;
+  const yieldQty = parseFloat(document.getElementById('yieldQty').value);
+  const yieldUnit = document.getElementById('yieldUnit').value.trim();
+  const toast = document.getElementById('saveToast');
+
+  if (!name) { toast.innerHTML = '<div class="toast err">اكتب اسم الريسيبي.</div>'; return; }
+  if (!yieldQty || yieldQty <= 0) { toast.innerHTML = '<div class="toast err">حدد الكمية الأساسية.</div>'; return; }
+  if (!yieldUnit) { toast.innerHTML = '<div class="toast err">حدد وحدة القياس.</div>'; return; }
+  if (currentIngredients.length === 0) { toast.innerHTML = '<div class="toast err">ضيف مكون واحد على الأقل.</div>'; return; }
+
+  const id = currentRecipeId || slugId();
+  const recipe = { id, name, tier, category, yieldQty, yieldUnit, ingredients: currentIngredients, packaging: currentPackaging, updatedAt: new Date().toISOString() };
+
+  try {
+    const result = await gsSet(`recipe:${id}`, JSON.stringify(recipe));
+    if (result) {
+      currentRecipeId = id;
+      recipesIndex[id] = recipe;
+      toast.innerHTML = `<div class="toast ok">تم حفظ ريسيبي "${name}" بنجاح.</div>`;
+      document.getElementById('deleteRecipeBtn').style.display = 'inline-block';
+      await loadRecipesIndex();
+      document.getElementById('recipeSelect').value = id;
+      await syncRecipeToMaterial(id);
+    } else {
+      toast.innerHTML = '<div class="toast err">حصل خطأ أثناء الحفظ، حاول تاني.</div>';
+    }
+  } catch (e) {
+    toast.innerHTML = `<div class="toast err">${e && e.message ? e.message : 'حصل خطأ أثناء الحفظ.'}</div>`;
+  }
+}
+
+// بيحدّث سعر المادة اللي نفس اسم الريسيبي (لو موجودة)، أو يضيفها جديدة (لو مش موجودة) - عشان منتج الريسيبي يبقى متاح كمادة بسعره الحالي
+async function syncRecipeToMaterial(recipeId) {
+  const recipe = recipesIndex[recipeId];
+  if (!recipe) return;
+  const unitCost = Math.round(getRecipeUnitCost(recipeId) * 10000) / 10000;
+
+  const existing = materialsCatalog.find(m => m.name === recipe.name);
+  if (existing) {
+    if (existing.price === unitCost && existing.unit === recipe.yieldUnit) return; // مفيش تغيير فعلي
+    existing.price = unitCost;
+    existing.unit = recipe.yieldUnit;
+  } else {
+    materialsCatalog.push({
+      name: recipe.name,
+      unit: recipe.yieldUnit,
+      price: unitCost,
+      type: 'raw',
+      group: recipe.category || 'أخرى'
+    });
+  }
+  await saveMaterials();
+  populateIngredientsDatalist();
+}
+
+async function syncAllRecipesToMaterials() {
+  const hint = document.getElementById('syncAllHint');
+  const btn = document.getElementById('syncAllBtn');
+  btn.disabled = true; btn.textContent = 'جاري المزامنة...';
+
+  let updated = 0; let added = 0;
+  Object.values(recipesIndex).forEach(recipe => {
+    const unitCost = Math.round(getRecipeUnitCost(recipe.id) * 10000) / 10000;
+    const existing = materialsCatalog.find(m => m.name === recipe.name);
+    if (existing) {
+      if (existing.price !== unitCost || existing.unit !== recipe.yieldUnit) {
+        existing.price = unitCost; existing.unit = recipe.yieldUnit; updated++;
+      }
+    } else {
+      materialsCatalog.push({ name: recipe.name, unit: recipe.yieldUnit, price: unitCost, type: 'raw', group: recipe.category || 'أخرى' });
+      added++;
+    }
+  });
+
+  const ok = await saveMaterials();
+  if (ok) {
+    hint.textContent = `تم تحديث ${updated} مادة، وإضافة ${added} مادة جديدة من أسعار الريسيبيهات.`;
+    hint.style.color = '#3B6D11';
+    populateIngredientsDatalist();
+    renderMaterialsList();
+  } else {
+    hint.textContent = 'حصل خطأ أثناء الحفظ، حاول تاني.'; hint.style.color = '#A32D2D';
+  }
+  btn.disabled = false; btn.textContent = 'مزامنة كل الريسيبيهات مع أسعار المواد الخام';
+}
+
+async function deleteCurrentRecipe() {
+  if (!currentRecipeId) return;
+  if (!confirm('متأكد إنك عايز تحذف الريسيبي ده؟')) return;
+  try {
+    await gsDelete(`recipe:${currentRecipeId}`);
+    delete recipesIndex[currentRecipeId];
+    await loadRecipesIndex();
+    newRecipe();
+  } catch (e) {
+    alert('حصل خطأ أثناء الحذف، حاول تاني.');
+  }
+}
+
+function calculateScale() {
+  const yieldQty = parseFloat(document.getElementById('yieldQty').value) || 0;
+  const yieldUnit = document.getElementById('yieldUnit').value || '';
+  const scaleQty = parseFloat(document.getElementById('scaleQty').value);
+
+  if (!yieldQty || yieldQty <= 0) { alert('حدد الكمية الأساسية للريسيبي الأول.'); return; }
+  if (!scaleQty || scaleQty <= 0) { alert('أدخل الكمية المطلوبة.'); return; }
+  if (currentIngredients.length === 0) { alert('ضيف مكونات للريسيبي الأول.'); return; }
+
+  const factor = scaleQty / yieldQty;
+  const scaleRow = r => {
+    const scaledQty = Math.round(r.qty * factor * 1000) / 1000;
+    const lineCost = Math.round(scaledQty * (r.price || 0) * 100) / 100;
+    return { name: r.name, unit: r.unit, qty: scaledQty, price: r.price || 0, lineCost };
+  };
+  const scaledIngredients = currentIngredients.map(scaleRow);
+  const scaledPackaging = currentPackaging.map(scaleRow);
+  const rawCost = Math.round(scaledIngredients.reduce((s, r) => s + r.lineCost, 0) * 100) / 100;
+  const packagingCost = Math.round(scaledPackaging.reduce((s, r) => s + r.lineCost, 0) * 100) / 100;
+  const totalCost = Math.round((rawCost + packagingCost) * 100) / 100;
+  const unitCost = Math.round((totalCost / scaleQty) * 100) / 100;
+
+  lastScaleResult = { scaleQty, yieldUnit, factor, scaledIngredients, scaledPackaging, rawCost, packagingCost, totalCost, unitCost, recipeName: document.getElementById('recipeName').value || 'ريسيبي' };
+
+  document.getElementById('scaleResultCard').style.display = 'block';
+  document.getElementById('sTotalCost').textContent = totalCost;
+  document.getElementById('sUnitCost').textContent = unitCost;
+  document.getElementById('sFactor').textContent = Math.round(factor * 100) / 100;
+
+  let html = '<h3 style="font-size:14px; margin-bottom:8px;">المكونات</h3><table><thead><tr><th>المكون</th><th>الكمية المطلوبة</th><th>الوحدة</th><th>سعر الوحدة</th><th>التكلفة</th></tr></thead><tbody>';
+  scaledIngredients.forEach(r => {
+    html += `<tr><td>${r.name}</td><td class="num">${r.qty}</td><td>${r.unit}</td><td class="num">${r.price}</td><td class="num">${r.lineCost}</td></tr>`;
+  });
+  html += '</tbody></table>';
+  if (scaledPackaging.length > 0) {
+    html += '<h3 style="font-size:14px; margin:14px 0 8px;">التعبئة</h3><table><thead><tr><th>العنصر</th><th>الكمية المطلوبة</th><th>الوحدة</th><th>سعر الوحدة</th><th>التكلفة</th></tr></thead><tbody>';
+    scaledPackaging.forEach(r => {
+      html += `<tr><td>${r.name}</td><td class="num">${r.qty}</td><td>${r.unit}</td><td class="num">${r.price}</td><td class="num">${r.lineCost}</td></tr>`;
+    });
+    html += '</tbody></table>';
+  }
+  document.getElementById('scaleTableWrap').innerHTML = html;
+  document.getElementById('scaleResultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function printScaleResult() {
+  if (!lastScaleResult) return;
+  const r = lastScaleResult;
+  let rows = '';
+  r.scaledIngredients.forEach(ing => {
+    rows += `<tr><td style="padding:7px;border-bottom:1px solid #ddd;">${ing.name}</td>
+      <td style="padding:7px;border-bottom:1px solid #ddd;text-align:center;">${ing.qty}</td>
+      <td style="padding:7px;border-bottom:1px solid #ddd;text-align:center;">${ing.unit}</td>
+      <td style="padding:7px;border-bottom:1px solid #ddd;text-align:center;">${ing.price}</td>
+      <td style="padding:7px;border-bottom:1px solid #ddd;text-align:center;">${ing.lineCost}</td></tr>`;
+  });
+  let packagingRows = '';
+  r.scaledPackaging.forEach(ing => {
+    packagingRows += `<tr><td style="padding:7px;border-bottom:1px solid #ddd;">${ing.name}</td>
+      <td style="padding:7px;border-bottom:1px solid #ddd;text-align:center;">${ing.qty}</td>
+      <td style="padding:7px;border-bottom:1px solid #ddd;text-align:center;">${ing.unit}</td>
+      <td style="padding:7px;border-bottom:1px solid #ddd;text-align:center;">${ing.price}</td>
+      <td style="padding:7px;border-bottom:1px solid #ddd;text-align:center;">${ing.lineCost}</td></tr>`;
+  });
+  document.getElementById('printArea').innerHTML = `
+    <div style="font-family:'Cairo',sans-serif; direction:rtl;">
+      <div style="border-bottom:2px solid #333; padding-bottom:12px; margin-bottom:16px;">
+        <h2 style="margin:0;">ريسيبي: ${r.recipeName}</h2>
+        <p style="margin:4px 0 0; color:#555;">Farooj Factory - فروج | الكمية المطلوبة: ${r.scaleQty} ${r.yieldUnit}</p>
+      </div>
+      <h3 style="font-size:14px;">المكونات</h3>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+        <thead><tr>
+          <th style="padding:7px;border-bottom:2px solid #333;text-align:right;">المكون</th>
+          <th style="padding:7px;border-bottom:2px solid #333;">الكمية</th>
+          <th style="padding:7px;border-bottom:2px solid #333;">الوحدة</th>
+          <th style="padding:7px;border-bottom:2px solid #333;">سعر الوحدة</th>
+          <th style="padding:7px;border-bottom:2px solid #333;">التكلفة</th>
+        </tr></thead>
+        <tbody>${rows}
+          <tr><td style="padding:7px;font-weight:700;">إجمالي المواد الخام</td><td></td><td></td><td></td>
+          <td style="padding:7px;font-weight:700;text-align:center;">${r.rawCost}</td></tr>
+        </tbody>
+      </table>
+      ${r.scaledPackaging.length > 0 ? `
+      <h3 style="font-size:14px;">التعبئة</h3>
+      <table style="width:100%; border-collapse:collapse; margin-bottom:14px;">
+        <thead><tr>
+          <th style="padding:7px;border-bottom:2px solid #333;text-align:right;">العنصر</th>
+          <th style="padding:7px;border-bottom:2px solid #333;">الكمية</th>
+          <th style="padding:7px;border-bottom:2px solid #333;">الوحدة</th>
+          <th style="padding:7px;border-bottom:2px solid #333;">سعر الوحدة</th>
+          <th style="padding:7px;border-bottom:2px solid #333;">التكلفة</th>
+        </tr></thead>
+        <tbody>${packagingRows}
+          <tr><td style="padding:7px;font-weight:700;">إجمالي التعبئة</td><td></td><td></td><td></td>
+          <td style="padding:7px;font-weight:700;text-align:center;">${r.packagingCost}</td></tr>
+        </tbody>
+      </table>` : ''}
+      <p style="margin-top:14px; font-weight:700;">التكلفة الإجمالية: ${r.totalCost} — تكلفة الوحدة الواحدة: ${r.unitCost}</p>
+    </div>`;
+  window.print();
+}
+
+function exportScaleToExcel() {
+  if (!lastScaleResult) return;
+  const r = lastScaleResult;
+  const sheetRows = [["المكون", "الكمية المطلوبة", "الوحدة", "سعر الوحدة", "التكلفة"]];
+  r.scaledIngredients.forEach(ing => {
+    sheetRows.push([ing.name, ing.qty, ing.unit, ing.price, ing.lineCost]);
+  });
+  sheetRows.push(["إجمالي المواد الخام", "", "", "", r.rawCost]);
+  if (r.scaledPackaging.length > 0) {
+    sheetRows.push([]);
+    sheetRows.push(["التعبئة"]);
+    r.scaledPackaging.forEach(ing => {
+      sheetRows.push([ing.name, ing.qty, ing.unit, ing.price, ing.lineCost]);
+    });
+    sheetRows.push(["إجمالي التعبئة", "", "", "", r.packagingCost]);
+  }
+  sheetRows.push([]);
+  sheetRows.push(["التكلفة الإجمالية", "", "", "", r.totalCost]);
+  sheetRows.push(["تكلفة الوحدة الواحدة", "", "", "", r.unitCost]);
+
+  const ws = XLSX.utils.aoa_to_sheet(sheetRows);
+  ws['!cols'] = [{ wch: 35 }, { wch: 16 }, { wch: 10 }, { wch: 12 }, { wch: 12 }];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "ريسيبي");
+  XLSX.writeFile(wb, `ريسيبي_${r.recipeName}_${r.scaleQty}${r.yieldUnit}.xlsx`);
+}
+
+async function importPresetRecipes() {
+  const hint = document.getElementById('importHint');
+  const btn = document.getElementById('importBtn');
+  if (!confirm(`سيتم استيراد ${PRESET_RECIPES.length} ريسيبي جاهز لقائمة الريسيبيهات. هل تريد الاستمرار؟`)) return;
+
+  btn.disabled = true;
+  hint.textContent = 'جاري الاستيراد...'; hint.style.color = '#8A8A8A';
+  let successCount = 0;
+  for (const recipe of PRESET_RECIPES) {
+    try {
+      const result = await gsSet(`recipe:${recipe.id}`, JSON.stringify(recipe));
+      if (result) successCount++;
+    } catch (e) { /* skip failed one, continue with rest */ }
+  }
+  await loadRecipesIndex();
+  hint.textContent = `تم استيراد ${successCount} من ${PRESET_RECIPES.length} ريسيبي بنجاح.`;
+  hint.style.color = successCount === PRESET_RECIPES.length ? '#3B6D11' : '#8E1515';
+  btn.disabled = false;
+}
+
+boot();
+
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./recipe-sw.js').catch((e) => console.error('SW register failed:', e));
+  });
+}
+</script>
+</body>
+</html>
