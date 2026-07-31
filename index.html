@@ -2010,7 +2010,9 @@ async function importPresetRecipes() {
   btn.disabled = false;
 }
 
-loadFactoryUsers().then(() => populateFactoryUserSelect());
+Promise.all([loadMaterials(), loadMaterialGroups(), loadFactoryUsers()]).then(() => {
+  populateFactoryUserSelect();
+});
 </script>
 
 <script>
